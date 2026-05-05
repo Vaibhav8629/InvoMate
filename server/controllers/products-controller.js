@@ -33,6 +33,16 @@ const addProducts = async (req, res) => {
             user: userData._id
         });
 
+        // Create notification for product addition
+        const notificationService = req.app.get("notificationService");
+        if (notificationService) {
+            await notificationService.createProductNotification(
+                userData._id,
+                item,
+                product._id
+            );
+        }
+
         res.status(200).json(product);
 
     } catch (error) {

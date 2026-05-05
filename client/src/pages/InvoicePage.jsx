@@ -208,6 +208,7 @@ const InvoicePage = () => {
     setSubtotal((prev) => prev + base);
     setProfit((prev) => prev + Number(newItem.profit));
     setTax((prev) => prev + (Number(newItem.price) - base));
+    setSearchItem("");
   };
 
   const handleQtyChange = (index, value) => {

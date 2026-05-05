@@ -32,6 +32,15 @@ const createProfile = async (req, res) => {
             user: userData._id
         });
 
+        // Create notification for profile creation
+        const notificationService = req.app.get("notificationService");
+        if (notificationService) {
+            await notificationService.createProfileNotification(
+                userData._id,
+                ShopName
+            );
+        }
+
         res.status(200).json(profile);
 
     } catch (error) {
@@ -55,6 +64,15 @@ const updateProfile = async (req, res) => {
             req.body,
             { new: true }
         );
+
+        // Create notification for profile update
+        const notificationService = req.app.get("notificationService");
+        if (notificationService) {
+            await notificationService.createProfileNotification(
+                userId,
+                updatedData.ShopName
+            );
+        }
 
         res.status(200).json({ message: "Profile Updated successfully." });
 

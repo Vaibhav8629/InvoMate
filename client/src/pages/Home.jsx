@@ -5,6 +5,7 @@ import {
   Drawer, TextField, IconButton, CircularProgress,
 } from "@mui/material";
 import DownloadReportButton from "../components/DownloadReportButton";
+import NotificationBell from "../components/NotificationBell";
 import InventoryIcon from "@mui/icons-material/Inventory2Outlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import DailyProfitChart from "../components/Chart";
@@ -476,12 +477,37 @@ const Dashboard = () => {
   const [shopName, setShopName] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     injectKeyframes();
     // slight delay so entrance animations fire after mount
     const t = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(t);
+  }, []);
+
+  // Fetch user ID
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const res = await fetch("http://localhost:5000/api/auth/user", {
+            headers: { 
+              "Content-Type": "application/json", 
+              Authorization: `Bearer ${token}` 
+            },
+          });
+          const data = await res.json();
+          if (data._id) {
+            setUserId(data._id);
+          }
+        } catch (error) {
+          console.error("Error fetching user ID:", error);
+        }
+      }
+    };
+    fetchUserId();
   }, []);
 
   const today = new Date();
@@ -599,7 +625,7 @@ const Dashboard = () => {
               animation: "fadeSlideUp 0.35s ease both",
               animationDelay: `${0.12 + i * 0.06}s`,
             }}>
-              <NavItem icon={icons[i]} label={label} onClick={() => navigate(paths[i])} active={i === 0} />
+              <NavItem icon={icons[i]} label={label} onClick={() => navigate(paths[i])} />
             </Box>
           );
         })}
@@ -644,22 +670,8 @@ const Dashboard = () => {
             display: "flex", gap: "10px", alignItems: "center",
             animation: "fadeSlideUp 0.35s ease 0.15s both",
           }}>
-            <Tooltip title="Notifications">
-              <IconButton sx={{
-                width: 38, height: 38, borderRadius: "10px",
-                border: "1px solid #E8ECF0", background: "#FAFBFC",
-                color: "#64748B",
-                transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-                "&:hover": {
-                  background: "#EFF6FF", color: "#2563EB", borderColor: "#BFDBFE",
-                  transform: "scale(1.08) rotate(-8deg)",
-                  boxShadow: "0 4px 12px rgba(37,99,235,0.18)",
-                },
-                "&:active": { transform: "scale(0.93)" },
-              }}>
-                <NotificationsNoneRoundedIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Tooltip>
+            {/* Notification Bell */}
+            {userId && <NotificationBell userId={userId} />}
 
             <Button
               startIcon={<AddCircleOutlineIcon sx={{ fontSize: "16px !important" }} />}

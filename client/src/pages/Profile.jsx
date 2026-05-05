@@ -88,7 +88,7 @@ const FieldLabel = ({ children }) => {
 const ShopProfile = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { logoutUser } = useAuth();
+  const { logoutUser, user } = useAuth();
 
   const [profileExist, setProfileExist] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -140,11 +140,11 @@ const ShopProfile = () => {
       },
     });
     const data = await res.json();
-    setName(data.ShopName ?? "");
+    setName(user?.username || data.ShopName || "");
     setGSTNum(data.GSTNumber ?? "");
     setAddress(data.Address ?? "");
     setPhone(data.Phone ?? "");
-    setEmail(data.Email ?? "");
+    setEmail(user?.email || data.Email || "");
     setPincode(data.Pincode ?? "");
     setShopCode(data.ShopCode ?? "");
     setProfileExist(true);
@@ -152,7 +152,7 @@ const ShopProfile = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]);
 
   // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
@@ -497,7 +497,7 @@ const ShopProfile = () => {
                 <TextField
                   fullWidth
                   value={name}
-                  disabled={!editing}
+                  disabled={true}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter shop name"
                   sx={fieldSx}
@@ -560,7 +560,7 @@ const ShopProfile = () => {
                 <TextField
                   fullWidth
                   value={email}
-                  disabled={!editing}
+                  disabled={true}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email address"
                   InputProps={{

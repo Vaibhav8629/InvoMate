@@ -37,6 +37,16 @@ const saveInvoice = async (req, res) => {
       profit
     });
 
+    // Create notification for invoice creation
+    const notificationService = req.app.get("notificationService");
+    if (notificationService) {
+      await notificationService.createInvoiceNotification(
+        req.user.id,
+        invoiceNumber,
+        invoice._id
+      );
+    }
+
     res.status(200).json(invoice);
   } catch (error) {
     console.log(error);

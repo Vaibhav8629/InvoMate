@@ -5,6 +5,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(localStorage.getItem("token"));
     const [role, setRole] = useState(null);
+    const [user, setUser] = useState(null);
 
     const isLogged = !!token;
 
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }) => {
             console.log(data.role);
             if (res.status === 200) {
                 setRole(data.role); // ✅ get role from backend
+                setUser(data);
             } else {
                 logoutUser();
             }
@@ -43,11 +45,12 @@ export const AuthProvider = ({ children }) => {
     const logoutUser = () => {
         setToken("");
         setRole(null);
+        setUser(null);
         localStorage.removeItem("token");
     };
 
     return (
-        <AuthContext.Provider value={{ isLogged, token, role, storeTokenInLS, logoutUser }}>
+        <AuthContext.Provider value={{ isLogged, token, role, user, storeTokenInLS, logoutUser }}>
             {children}
         </AuthContext.Provider>
     );

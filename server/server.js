@@ -1,4 +1,6 @@
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 const router = require("./routes/router");
 const connectDB = require("./utils/db");
 const cors = require("cors");
@@ -6,7 +8,12 @@ require("dotenv").config();
 const reportRoutes = require("./routes/reports");
 const aiRoutes = require("./routes/aiDashboardRoutes");
 const signatureRoutes = require('./routes/signature');
+const notificationRoutes = require('./routes/notificationRoutes');
+const testNotificationRoutes = require('./routes/testNotificationRoutes'); // For testing only
+const NotificationService = require('./services/notificationService');
+
 const app = express();
+const server = http.createServer(app);
 
 const corsOptions = {
     origin: "http://localhost:5173",
@@ -16,17 +23,46 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Initialize Socket.io with CORS
+const io = new Server(server, {
+    cors: corsOptions
+});
+
+// Socket.io connection handling
+io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
+
+    // Join user to their personal room for targeted notifications
+    socket.on("join", (userId) => {
+        socket.join(userId);
+        console.log(`User ${userId} joined their notification room`);
+    });
+
+    socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+    });
+});
+
+// Make io accessible to routes
+app.set("io", io);
+
+// Initialize notification service
+const notificationService = new NotificationService(io);
+app.set("notificationService", notificationService);
+
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use("/api/ai", aiRoutes);
 app.use("/api/auth", router);
 app.use('/api/reports', reportRoutes);
 app.use('/api/signature', signatureRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/test-notifications', testNotificationRoutes); // For testing only - remove in production
 
 const PORT = process.env.PORT;
 
 connectDB().then(() => {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`Server is running at PORT ${PORT}`);
     })
 });
