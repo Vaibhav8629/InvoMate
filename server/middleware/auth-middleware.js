@@ -4,21 +4,36 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const authMiddleware = async (req, res, next) => { 
-	const token = req.header("Authorization");
+	// Read token from cookies instead of Authorization header
+	const token = req.cookies.token;
 	
-	if(!token) return res.status(400).json({msg : "error"});
+	console.log("🔍 Auth Middleware - Cookies received:", req.cookies);
+	console.log("🔍 Auth Middleware - Token:", token ? token.substring(0, 20) + "..." : "NO TOKEN");
 	
-	const jwtToken = token.split(" ")[1];
+	if(!token) {
+		console.log("❌ No token found in cookies");
+		return res.status(401).json({msg : "Unauthorized - No token provided"});
+	}
 	
 	try{
-	const isVerified = jwt.verify(jwtToken, process.env.JWT_SIGN); 
-	const userData = await User.findOne({email : isVerified.email}).select({password:0});
-	req.user = userData; 
-	req.id = userData._id;
-	next();
+		// JWT verification logic remains unchanged
+		const isVerified = jwt.verify(token, process.env.JWT_SIGN); 
+		const userData = await User.findOne({email : isVerified.email}).select({password:0});
+		
+		if (!userData) {
+			console.log("❌ User not found for token");
+			return res.status(401).json({ msg: "User not found" });
+		}
+		
+		console.log("✅ Token verified for user:", userData.email);
+		
+		req.user = userData; 
+		req.id = userData._id;
+		next();
 	} catch(error){
-        return res.status(401).json({ msg: "Invalid token" });
-    }
+		console.error("❌ Token verification failed:", error.message);
+		return res.status(401).json({ msg: "Invalid token" });
+	}
 }
 
 module.exports = authMiddleware;

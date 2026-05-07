@@ -15,28 +15,6 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line,
 } from "recharts";
 
-// ─── Gemini ───────────────────────────────────────────────────────────────────
-const callGemini = async (prompt) => {
-  const apiKey = import.meta.env.VITE_GEMINI_KEY;
-  if (!apiKey) throw new Error("Missing VITE_GEMINI_KEY in .env");
-  const makeReq = async (jsonMime) => {
-    const gc = { temperature: 0.4 };
-    if (jsonMime) gc.responseMimeType = "application/json";
-    return fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: gc }) }
-    );
-  };
-  let res = await makeReq(true);
-  if (res.status === 400) res = await makeReq(false);
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(`Gemini ${res.status}: ${e?.error?.message}`); }
-  const data = await res.json();
-  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-  const clean = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
-  try { return JSON.parse(clean); }
-  catch { throw new Error("Gemini returned invalid JSON"); }
-};
-
 const C = {
   blue: "#1B6EF3", blueDark: "#155DD6", blueLight: "#E8F0FE",
   blueMid1: "#E3F2FD", blueMid2: "#90CAF9", blueMid3: "#42A5F5", blueMid4: "#1E88E5", blueDarkMid: "#0D47A1",
@@ -84,53 +62,18 @@ export default function AIAnalyticsDashboard() {
   const run = async () => {
     setLoading(true); setError(null); setAi(null);
     try {
-      const token = localStorage.getItem("token");
-      setStage("Fetching business data…");
+      setStage("AI is analyzing your business data…");
+      
       const res = await fetch("http://localhost:5000/api/ai/dashboard-analytics", {
         method: "GET",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: 'include', // Enable cookies
+        headers: { "Content-Type": "application/json" },
       });
+      
       if (!res.ok) throw new Error(`Backend ${res.status}`);
       const data = await res.json();
 
-      setStage("Gemini is analyzing your business…");
-      const prompt = `
-You are a business analyst AI for InvoMate. Analyze the data below and return ONLY valid JSON with NO markdown fences, NO explanation.
-Data: ${JSON.stringify(data)}
-
-Return exactly this shape:
-{
-  "kpis": { "totalRevenue": 512000, "revenueGrowthPct": 12, "totalOrders": 3420, "ordersGrowthPct": 8, "totalCustomers": 890, "customersGrowthPct": 5, "avgOrderValue": 1490, "avgOrderGrowthPct": -3, "profitMarginPct": 34 },
-  "businessInsights": [{ "text": "insight text", "trend": "up" }],
-  "salesPrediction": {
-    "summary": "paragraph", "growthPercent": 9, "points": ["p1","p2","p3"],
-    "trendData": [
-      {"week":"W1","actual":48000,"predicted":null},{"week":"W2","actual":52000,"predicted":null},
-      {"week":"W3","actual":55000,"predicted":null},{"week":"W4","actual":51000,"predicted":null},
-      {"week":"W5","actual":null,"predicted":57000},{"week":"W6","actual":null,"predicted":61000}
-    ]
-  },
-  "stockSuggestions": [{"product":"Name","daysLeft":8,"action":"restock","quantity":120,"reason":"brief"}],
-  "productAnalysis": {
-    "topProducts": [{"name":"P","sold":340,"revenue":85000,"score":88,"reason":"why"}],
-    "lowProducts":  [{"name":"P","sold":45,"revenue":9000,"score":28,"issue":"what","suggestion":"fix"}]
-  },
-  "customerHeatmap": [
-    {"day":"Mon","morning":12,"afternoon":28,"evening":18,"night":5},
-    {"day":"Tue","morning":9,"afternoon":32,"evening":21,"night":4},
-    {"day":"Wed","morning":14,"afternoon":25,"evening":17,"night":6},
-    {"day":"Thu","morning":11,"afternoon":30,"evening":24,"night":4},
-    {"day":"Fri","morning":19,"afternoon":38,"evening":31,"night":11},
-    {"day":"Sat","morning":22,"afternoon":42,"evening":24,"night":16},
-    {"day":"Sun","morning":15,"afternoon":20,"evening":13,"night":9}
-  ],
-  "profitOptimization": [{"idea":"suggestion","impact":"high","category":"pricing"}],
-  "profitContribution": [{"product":"Product A","profit":35000,"percentage":35}]
-}
-Rules: businessInsights >= 7. profitOptimization >= 5. Use real data.`;
-
-      const result = await callGemini(prompt);
-      setAi(result);
+      setAi(data);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -147,7 +90,7 @@ Rules: businessInsights >= 7. profitOptimization >= 5. Use real data.`;
         </Box>
         <Typography sx={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 800, fontSize: "1.7rem", color: C.text, mb: 1.5 }}>AI Business Intelligence</Typography>
         <Typography variant="body1" sx={{ color: C.sub, mb: 3.5, lineHeight: 1.7 }}>
-          Deep insights, sales forecasts, stock alerts and profit opportunities — all powered by Gemini 2.5 Flash.
+          Deep insights, sales forecasts, stock alerts and profit opportunities — all powered by advanced AI analytics.
         </Typography>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, justifyContent: "center", mb: 4 }}>
           {["Insights","Sales Forecast","Stock Alerts","Customer Heatmap","Profit Analysis"].map(f => (
@@ -174,7 +117,7 @@ Rules: businessInsights >= 7. profitOptimization >= 5. Use real data.`;
             <Psychology sx={{ fontSize: 30, color: C.blue }}/>
           </Box>
         </Box>
-        <Typography sx={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, fontSize: "1.2rem", color: C.text, mb: 0.75 }}>Gemini is thinking…</Typography>
+        <Typography sx={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, fontSize: "1.2rem", color: C.text, mb: 0.75 }}>AI is analyzing your business…</Typography>
         <Typography variant="body2" sx={{ color: C.sub, mb: 2.5 }}>{stage}</Typography>
         <LinearProgress sx={{ width: 260, mx: "auto", borderRadius: 99, height: 4, background: C.border, "& .MuiLinearProgress-bar": { background: `linear-gradient(90deg,${C.blue},${C.blueMid4})`, borderRadius: 99 } }}/>
       </Box>
@@ -206,7 +149,7 @@ Rules: businessInsights >= 7. profitOptimization >= 5. Use real data.`;
           <Typography sx={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 800, fontSize: "1.8rem", color: C.text, lineHeight: 1.1 }}>AI Analytics</Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.5 }}>
             <Box sx={{ width: 7, height: 7, borderRadius: "50%", background: C.green, animation: "pulse 1.8s ease-in-out infinite", "@keyframes pulse": { "0%,100%": { opacity: 1, transform: "scale(1)" }, "50%": { opacity: 0.4, transform: "scale(1.4)" } } }}/>
-            <Typography variant="caption" sx={{ color: C.sub, fontWeight: 600 }}>Powered by Gemini 2.5 Flash</Typography>
+            <Typography variant="caption" sx={{ color: C.sub, fontWeight: 600 }}>Powered by AI Analytics</Typography>
           </Box>
         </Box>
         <Button variant="outlined" startIcon={<Refresh/>} onClick={run} sx={{ borderColor: C.border, color: C.text, fontWeight: 600, borderRadius: "12px", px: 2.5, py: 1, "&:hover": { borderColor: C.blue, color: C.blue, background: C.blueLight } }}>
@@ -592,7 +535,7 @@ Rules: businessInsights >= 7. profitOptimization >= 5. Use real data.`;
       {/* ═══════════════════════════════════════════════════════════════════════ */}
       <Box sx={{ textAlign: "center", pb: 4, pt: 2 }}>
         <Typography variant="caption" sx={{ color: "#A3B0BF", fontWeight: 500, fontSize: "0.82rem" }}>
-          ✨ Advanced analytics powered by Gemini 2.5 Flash · InvoMate AI Engine
+          ✨ Advanced analytics powered by AI · InvoMate Intelligence Engine
         </Typography>
       </Box>
     </Box>

@@ -4,6 +4,7 @@ const { Server } = require("socket.io");
 const router = require("./routes/router");
 const connectDB = require("./utils/db");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const reportRoutes = require("./routes/reports");
 const aiRoutes = require("./routes/aiDashboardRoutes");
@@ -22,6 +23,16 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions));
+
+// Parse cookies BEFORE body parsers
+app.use(cookieParser());
+
+// Body parsers
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
+// Body parsers
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 // Initialize Socket.io with CORS
 const io = new Server(server, {
@@ -50,14 +61,13 @@ app.set("io", io);
 const notificationService = new NotificationService(io);
 app.set("notificationService", notificationService);
 
-app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ limit: "100mb", extended: true }));
+// Routes
 app.use("/api/ai", aiRoutes);
 app.use("/api/auth", router);
 app.use('/api/reports', reportRoutes);
 app.use('/api/signature', signatureRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/test-notifications', testNotificationRoutes); // For testing only - remove in production
+app.use('/api/test-notifications', testNotificationRoutes);
 
 const PORT = process.env.PORT;
 

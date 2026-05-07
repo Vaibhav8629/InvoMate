@@ -489,22 +489,19 @@ const Dashboard = () => {
   // Fetch user ID
   useEffect(() => {
     const fetchUserId = async () => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const res = await fetch("http://localhost:5000/api/auth/user", {
-            headers: { 
-              "Content-Type": "application/json", 
-              Authorization: `Bearer ${token}` 
-            },
-          });
-          const data = await res.json();
-          if (data._id) {
-            setUserId(data._id);
-          }
-        } catch (error) {
-          console.error("Error fetching user ID:", error);
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/user", {
+          credentials: 'include', // Enable cookies
+          headers: { 
+            "Content-Type": "application/json", 
+          },
+        });
+        const data = await res.json();
+        if (data._id) {
+          setUserId(data._id);
         }
+      } catch (error) {
+        console.error("Error fetching user ID:", error);
       }
     };
     fetchUserId();
@@ -514,27 +511,27 @@ const Dashboard = () => {
   const formattedToday = `${String(today.getDate()).padStart(2, "0")}-${String(today.getMonth() + 1).padStart(2, "0")}-${today.getFullYear()}`;
 
   const fetchInvoices = async () => {
-    const token = localStorage.getItem("token");
     const res = await fetch("http://localhost:5000/api/auth/getinvoices", {
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: 'include', // Enable cookies
+      headers: { "Content-Type": "application/json" },
     });
     const data = await res.json();
     setInvoices(Array.isArray(data) ? data : []);
   };
 
   const fetchProducts = async () => {
-    const token = localStorage.getItem("token");
     const res = await fetch("http://localhost:5000/api/auth/getproducts", {
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: 'include', // Enable cookies
+      headers: { "Content-Type": "application/json" },
     });
     const data = await res.json();
     setProducts(Array.isArray(data) ? data : []);
   };
 
   const fetchProfile = async () => {
-    const token = localStorage.getItem("token");
     const res = await fetch("http://localhost:5000/api/auth/findprofile", {
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: 'include', // Enable cookies
+      headers: { "Content-Type": "application/json" },
     });
     const data = await res.json();
     setShopName(data.ShopName ?? "");
@@ -560,13 +557,13 @@ const Dashboard = () => {
     totalInvoices: invoices.length,
     todayInvoiceCount: todayInvoices.length,
     totalProducts: products.length,
-    lowStockProducts: lowStockProducts.map(p => ({ name: p.name, stock: p.Stock })),
+    lowStockProducts: lowStockProducts.map(p => ({ name: p.item, stock: p.Stock })),
     recentInvoices: recentInvoices.map(inv => ({
       invoiceNumber: inv.invoiceNumber, customer: inv.customerName,
       total: inv.total, profit: inv.profit, date: inv.date,
     })),
     products: products.map(p => ({
-      name: p.name, stock: p.Stock, price: p.Price, category: p.Category,
+      name: p.item, stock: p.Stock, price: p.Price, category: p.Category,
     })),
   };
 
@@ -854,10 +851,11 @@ const Dashboard = () => {
                   </Box>
                 ) : (
                   lowStockProducts.slice(0, 8).map((p, i) => (
-                    <Box key={i} sx={{
+                    <Box key={i} onClick={() => navigate("/products")} sx={{
                       display: "flex", alignItems: "center", justifyContent: "space-between",
                       px: "12px", py: "10px", borderRadius: "10px",
                       background: "#FAFBFC", border: "1px solid #F1F5F9",
+                      cursor: "pointer",
                       animation: "fadeSlideUp 0.3s ease both",
                       animationDelay: `${0.4 + i * 0.05}s`,
                       transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
@@ -878,7 +876,7 @@ const Dashboard = () => {
                           <Inventory2OutlinedIcon sx={{ fontSize: 14 }} />
                         </Box>
                         <Typography sx={{ fontSize: "0.825rem", fontWeight: 600, color: "#1E293B" }}>
-                          {p.name}
+                          {p.item}
                         </Typography>
                       </Box>
                       <Chip

@@ -19,7 +19,8 @@ export default function SignatureUpload({ onSaved }) {
   useEffect(() => {
     async function loadSig() {
       const res  = await fetch('http://localhost:5000/api/signature', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include', // Enable cookies
+        headers: { 'Content-Type': 'application/json' },
       });
       const data = await res.json();
       if (data?.signature?.url) setCurrentSig(data.signature.url);
@@ -78,7 +79,7 @@ export default function SignatureUpload({ onSaved }) {
     try {
       const res  = await fetch('http://localhost:5000/api/signature/upload', {
         method:  'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include', // Enable cookies
         body:    formData,
       });
       const data = await res.json();
@@ -99,7 +100,8 @@ export default function SignatureUpload({ onSaved }) {
     try {
       await fetch('http://localhost:5000/api/signature', {
         method:  'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include', // Enable cookies
+        headers: { 'Content-Type': 'application/json' },
       });
       setCurrentSig(null);
       setStatus('Signature removed.');

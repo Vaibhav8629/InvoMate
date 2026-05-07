@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function SignUp() {
   const theme = useTheme();
-  const { storeTokenInLS, role } = useAuth();
+  const { loginUser, role } = useAuth();
   const navigate = useNavigate();
 
   const [emailError, setEmailError] = React.useState(false);
@@ -66,19 +66,23 @@ export default function SignUp() {
     try {
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Enable cookies
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ username: name, email, password }),
       });
       const data = await response.json();
       if (response.status === 200) {
-        storeTokenInLS(data.token);
+        alert('User registered successfully');
         navigate('/home');
       } else {
-        alert('User already exists');
+        alert(data.msg || 'Registration failed');
       }
       console.log('Server response:', data);
     } catch (error) {
       console.error('Error connecting to backend:', error);
+      alert('Error connecting to server');
     }
   };
 

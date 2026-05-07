@@ -30,9 +30,9 @@ export default function InvoiceView() {
 
   useEffect(() => {
     const fetchInvoice = async () => {
-      const token = localStorage.getItem("token");
       const res = await fetch(`http://localhost:5000/api/auth/invoice/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include', // Enable cookies
+        headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
       setInvoice(data.data);

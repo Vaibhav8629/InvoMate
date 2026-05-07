@@ -315,10 +315,10 @@ export default function ProductsTable() {
   };
 
   const fetchData = useCallback(async () => {
-    const token = localStorage.getItem("token");
     try {
       const res = await fetch("http://localhost:5000/api/auth/getproducts", {
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: 'include', // Enable cookies
+        headers: { "Content-Type": "application/json" },
       });
       if (!res.ok) throw new Error("Failed to fetch products");
       setProducts(await res.json());
@@ -331,13 +331,13 @@ export default function ProductsTable() {
   }, []);
 
   const handleAdd = async () => {
-    const token = localStorage.getItem("token");
     try {
       const res = await fetch(
         updateData ? "http://localhost:5000/api/auth/updateproduct" : "http://localhost:5000/api/auth/addproducts",
         {
           method: updateData ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          credentials: 'include', // Enable cookies
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             _id: productId, item_code: productItemCode, item: productName,
             price: productPrice, category: productCategory, GST: productGST,
@@ -356,10 +356,11 @@ export default function ProductsTable() {
   };
 
   const handleDelete = async (id) => {
-    const token = localStorage.getItem("token");
     try {
       const res = await fetch(`http://localhost:5000/api/auth/deleteproduct/${id}`, {
-        method: "DELETE", headers: { Authorization: `Bearer ${token}` },
+        method: "DELETE", 
+        credentials: 'include', // Enable cookies
+        headers: { "Content-Type": "application/json" },
       });
       if (!res.ok) throw new Error("Failed to delete product");
       fetchData();

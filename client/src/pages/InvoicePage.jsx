@@ -129,9 +129,9 @@ const InvoicePage = () => {
   };
 
   const handleBarcodeScan = async (barcode) => {
-    const token = localStorage.getItem("token");
     const res = await fetch(`http://localhost:5000/api/auth/product/barcode/${barcode}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include', // Enable cookies
+      headers: { "Content-Type": "application/json" },
     });
     const product = await res.json();
     if (product) handleAddToBill(product.item_code);
@@ -140,10 +140,10 @@ const InvoicePage = () => {
 
   const handleSaveBill = async () => {
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:5000/api/auth/saveinvoice", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: 'include', // Enable cookies
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           invoiceNumber: invoiceNum, customerName, shopName: name,
           shopAddress: address, shopGST: GST, items: itemsBuy,
@@ -156,7 +156,8 @@ const InvoicePage = () => {
         try {
           await fetch("http://localhost:5000/api/auth/updateproduct", {
             method: "PUT",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            credentials: 'include', // Enable cookies
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ _id: item._id, Stock: item.Stock - item.qty }),
           });
         } catch (err) { console.error("Error updating product:", item.name, err); }
@@ -168,15 +169,16 @@ const InvoicePage = () => {
   };
 
   const fetchProfileData = async () => {
-    const token = localStorage.getItem("token");
     const res = await fetch("http://localhost:5000/api/auth/findprofile", {
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: 'include', // Enable cookies
+      headers: { "Content-Type": "application/json" },
     });
     const d = await res.json();
     setName(d.ShopName); setGST(d.GSTNumber); setAddress(d.Address);
 
     const sigRes = await fetch("http://localhost:5000/api/signature", {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include', // Enable cookies
+      headers: { "Content-Type": "application/json" },
     });
     const sigData = await sigRes.json();
     if (sigData?.signature?.url) {
@@ -185,9 +187,9 @@ const InvoicePage = () => {
   };
 
   const fetchProductData = async () => {
-    const token = localStorage.getItem("token");
     const res = await fetch("http://localhost:5000/api/auth/getproducts", {
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: 'include', // Enable cookies
+      headers: { "Content-Type": "application/json" },
     });
     setProducts(await res.json());
   };

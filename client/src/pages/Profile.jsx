@@ -132,11 +132,10 @@ const ShopProfile = () => {
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchData = async () => {
-    const token = localStorage.getItem("token");
     const res = await fetch("http://localhost:5000/api/auth/findprofile", {
+      credentials: 'include', // Enable cookies
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
     const data = await res.json();
@@ -156,16 +155,15 @@ const ShopProfile = () => {
 
   // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    const token = localStorage.getItem("token");
     await fetch(
       profileExist
         ? "http://localhost:5000/api/auth/updateprofile"
         : "http://localhost:5000/api/auth/createprofile",
       {
         method: profileExist ? "PUT" : "POST",
+        credentials: 'include', // Enable cookies
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           ShopName: name,

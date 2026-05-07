@@ -3,54 +3,70 @@ import { createContext, useContext, useState, useEffect } from "react";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [token, setToken] = useState(localStorage.getItem("token"));
+    const [isLogged, setIsLogged] = useState(false);
     const [role, setRole] = useState(null);
     const [user, setUser] = useState(null);
-
-    const isLogged = !!token;
+    const [loading, setLoading] = useState(true);
 
     const fetchUser = async () => {
         try {
             const res = await fetch("http://localhost:5000/api/auth/user", {
                 method: "GET",
+                credentials: "include", // Enable cookies
                 headers: {
-                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json",
                 },
             });
 
             const data = await res.json();
-            console.log(data.role);
             if (res.status === 200) {
-                setRole(data.role); // ✅ get role from backend
+                setRole(data.role);
                 setUser(data);
+                setIsLogged(true);
             } else {
-                logoutUser();
+                setIsLogged(false);
+                setRole(null);
+                setUser(null);
             }
         } catch (err) {
             console.log("Error fetching user:", err);
-            logoutUser();
+            setIsLogged(false);
+            setRole(null);
+            setUser(null);
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (token) fetchUser();
-    }, [token]);
+        fetchUser();
+    }, []);
 
-    const storeTokenInLS = (serverToken) => {
-        setToken(serverToken);
-        localStorage.setItem("token", serverToken);
+    const loginUser = async () => {
+        // After successful login, fetch user data
+        await fetchUser();
     };
 
-    const logoutUser = () => {
-        setToken("");
-        setRole(null);
-        setUser(null);
-        localStorage.removeItem("token");
+    const logoutUser = async () => {
+        try {
+            await fetch("http://localhost:5000/api/auth/logout", {
+                method: "POST",
+                credentials: "include", // Enable cookies
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+        } catch (err) {
+            console.log("Error logging out:", err);
+        } finally {
+            setIsLogged(false);
+            setRole(null);
+            setUser(null);
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ isLogged, token, role, user, storeTokenInLS, logoutUser }}>
+        <AuthContext.Provider value={{ isLogged, role, user, loading, loginUser, logoutUser }}>
             {children}
         </AuthContext.Provider>
     );

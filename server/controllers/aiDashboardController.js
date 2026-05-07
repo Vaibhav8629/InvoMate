@@ -58,56 +58,48 @@ exports.getAIDashboardAnalytics = async (req, res) => {
     });
 
     const prompt = `
+You are a business analyst AI for InvoMate. Analyze the data below and return ONLY valid JSON with NO markdown fences, NO explanation.
+Data: ${JSON.stringify({
+  revenue,
+  profit,
+  sales,
+  stock,
+  customersPerDay,
+  productProfit,
+  invoices: invoices.length,
+  products: products.length
+})}
 
-Business Data:
-
-Revenue:${revenue}
-
-Profit:${profit}
-
-Sales:${JSON.stringify(sales)}
-
-Stock:${JSON.stringify(stock)}
-
-CustomersPerDay:${JSON.stringify(customersPerDay)}
-
-ProductProfit:${JSON.stringify(productProfit)}
-
-Return JSON with EXACTLY these fields:
-
+Return exactly this shape:
 {
-  "kpis": { "totalRevenue": number, "revenueGrowthPct": number, "totalOrders": number, "ordersGrowthPct": number, "totalCustomers": number, "customersGrowthPct": number, "avgOrderValue": number, "avgOrderGrowthPct": number, "profitMarginPct": number },
-  
-  "businessInsights": [{ "text": "insight text", "trend": "up|down|neutral" }],
-  
-  "futureSalesPrediction": {
-    "summary": "brief summary paragraph",
-    "growthPercent": number,
-    "points": ["key point 1", "key point 2", "key point 3"],
+  "kpis": { "totalRevenue": ${revenue}, "revenueGrowthPct": 12, "totalOrders": ${invoices.length}, "ordersGrowthPct": 8, "totalCustomers": ${Object.keys(customersPerDay).length}, "customersGrowthPct": 5, "avgOrderValue": ${Math.round(revenue / Math.max(invoices.length, 1))}, "avgOrderGrowthPct": -3, "profitMarginPct": ${Math.round((profit / Math.max(revenue, 1)) * 100)} },
+  "businessInsights": [{ "text": "insight text", "trend": "up" }],
+  "salesPrediction": {
+    "summary": "paragraph", "growthPercent": 9, "points": ["p1","p2","p3"],
     "trendData": [
-      {"week": "W1", "actual": number, "predicted": null},
-      {"week": "W2", "actual": number, "predicted": null},
-      {"week": "W3", "actual": null, "predicted": number},
-      {"week": "W4", "actual": null, "predicted": number}
+      {"week":"W1","actual":48000,"predicted":null},{"week":"W2","actual":52000,"predicted":null},
+      {"week":"W3","actual":55000,"predicted":null},{"week":"W4","actual":51000,"predicted":null},
+      {"week":"W5","actual":null,"predicted":57000},{"week":"W6","actual":null,"predicted":61000}
     ]
   },
-  
-  "stockReplenishment": [{ "product": "name", "daysLeft": number, "action": "restock|watch|ok", "quantity": number, "reason": "brief reason" }],
-  
-  "productPerformanceAnalysis": {
-    "topProducts": [{ "name": "product", "sold": number, "revenue": number, "score": 85, "reason": "why top" }],
-    "lowPerformers": [{ "name": "product", "sold": number, "revenue": number, "issue": "issue text" }]
+  "stockSuggestions": [{"product":"Name","daysLeft":8,"action":"restock","quantity":120,"reason":"brief"}],
+  "productAnalysis": {
+    "topProducts": [{"name":"P","sold":340,"revenue":85000,"score":88,"reason":"why"}],
+    "lowProducts":  [{"name":"P","sold":45,"revenue":9000,"score":28,"issue":"what","suggestion":"fix"}]
   },
-  
-  "customerHeatmap": [number, number, ...], // 7 numbers representing customer activity
-  
-  "profitOptimizationSuggestions": [{ "text": "suggestion", "impact": "high|medium|low" }],
-  
-  "profitContributionByProduct": [{ "product": "name", "profit": number, "percentage": number }]
+  "customerHeatmap": [
+    {"day":"Mon","morning":12,"afternoon":28,"evening":18,"night":5},
+    {"day":"Tue","morning":9,"afternoon":32,"evening":21,"night":4},
+    {"day":"Wed","morning":14,"afternoon":25,"evening":17,"night":6},
+    {"day":"Thu","morning":11,"afternoon":30,"evening":24,"night":4},
+    {"day":"Fri","morning":19,"afternoon":38,"evening":31,"night":11},
+    {"day":"Sat","morning":22,"afternoon":42,"evening":24,"night":16},
+    {"day":"Sun","morning":15,"afternoon":20,"evening":13,"night":9}
+  ],
+  "profitOptimization": [{"idea":"suggestion","impact":"high","category":"pricing"}],
+  "profitContribution": [{"product":"Product A","profit":35000,"percentage":35}]
 }
-
-Return ONLY valid JSON.
-`;
+Rules: businessInsights >= 7. profitOptimization >= 5. Use real data from the provided business data.`;
 
     const aiText = await askGemini(prompt);
 
@@ -127,29 +119,15 @@ Return ONLY valid JSON.
       aiData = JSON.parse(cleaned);
     }
 
-    // Map Gemini response keys to frontend expected keys
-    const ai = {
-      kpis: aiData.kpis,
-      businessInsights: aiData.businessInsights,
-      salesPrediction: aiData.futureSalesPrediction, // Map futureSalesPrediction → salesPrediction
-      stockSuggestions: aiData.stockReplenishment,
-      productAnalysis: aiData.productPerformanceAnalysis,
-      customerHeatmap: aiData.customerHeatmap,
-      profitOptimization: aiData.profitOptimizationSuggestions,
-      profitContribution: aiData.profitContributionByProduct
-    };
-
+    // Use the response directly since it matches frontend expectations
     const finalData = {
-
       revenue,
       profit,
       sales,
       stock,
       customersPerDay,
       productProfit,
-
-      ai
-
+      ...aiData  // Spread the AI response directly
     };
 
     setCache(cacheKey, finalData);

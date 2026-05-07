@@ -10,6 +10,8 @@ const adminMiddleware = require("../middleware/admin-middleware");
 
 //public route
 router.route("/login").post(authController.login);
+router.route("/logout").post(authController.logout);
+router.route("/test-cookie").get(authController.testCookie); // Test endpoint
 
 
 //Protected route
@@ -27,4 +29,4 @@ router.route("/getinvoices").get(authMiddleware,invoiceController.getInvoices);
 router.get("/product/barcode/:code", authMiddleware, barcodeController.getProductByBarcode);
 router.get("/invoice/:id",authMiddleware, invoiceController.getInvoiceById);
 
-module.exports = router;  
+module.exports = router;

@@ -134,9 +134,9 @@ export default function Invoices() {
   const [loading, setLoading]                 = useState(true);
 
   const fetchInvoices = async () => {
-    const token = localStorage.getItem("token");
     const res   = await fetch("http://localhost:5000/api/auth/getinvoices", {
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: 'include', // Enable cookies
+      headers: { "Content-Type": "application/json" },
     });
     const data = await res.json();
     setInvoices(data);

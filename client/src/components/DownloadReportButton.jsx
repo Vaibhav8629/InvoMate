@@ -11,8 +11,9 @@ export default function DownloadReportButton({ date }) {
       const dateStr = date || new Date().toISOString().split('T')[0];
 
       const res = await fetch(`http://localhost:5000/api/reports/daily?date=${dateStr}`, {
+        credentials: 'include', // Enable cookies
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
         },
       });
 

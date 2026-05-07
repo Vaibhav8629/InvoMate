@@ -45,7 +45,7 @@ const Feature = ({ icon, text }) => (
 
 export default function SignIn() {
   const theme = useTheme();
-  const { storeTokenInLS } = useAuth();
+  const { loginUser } = useAuth();
   const navigate = useNavigate();
 
   const [nameValue, setNameValue] = React.useState('');
@@ -103,6 +103,7 @@ export default function SignIn() {
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
+        credentials: 'include', // Enable cookies
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: nameValue,
@@ -114,13 +115,14 @@ export default function SignIn() {
       const data = await response.json();
 
       if (response.status === 200) {
-        storeTokenInLS(data.token);
+        await loginUser(); // Fetch user data after successful login
         navigate('/home');
       } else {
-        alert('Invalid Credentials');
+        alert(data.msg || 'Invalid Credentials');
       }
     } catch (error) {
       console.error('Error connecting to backend:', error);
+      alert('Error connecting to server');
     }
   };
 
@@ -259,7 +261,7 @@ export default function SignIn() {
             color: 'rgba(255,255,255,0.45)',
             zIndex: 1,
           }}>
-            © 2025 Invomate · Built for local businesses
+            © 2026 Invomate · Built for local businesses
           </Typography>
         </Box>
 
@@ -423,43 +425,6 @@ export default function SignIn() {
               >
                 Sign In
               </Button>
-            </Box>
-
-            {/* Divider */}
-            <Divider sx={{
-              my: '24px',
-              fontSize: '0.8rem',
-              color: theme.palette.text.disabled,
-              '&::before, &::after': { borderColor: theme.palette.divider },
-            }}>
-              or
-            </Divider>
-
-            {/* Sign up link */}
-            <Box sx={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              py: '14px', borderRadius: '12px',
-              background: theme.palette.background.paper,
-              border: `1px solid ${theme.palette.divider}`,
-            }}>
-              <Typography sx={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
-                Don't have an account?
-              </Typography>
-              <Link
-                href="/register"
-                underline="none"
-                sx={{
-                  fontFamily: "'DM Sans', sans-serif",
-                  color: theme.palette.primary.main,
-                  fontWeight: 700,
-                  fontSize: '0.875rem',
-                  borderBottom: '2px solid transparent',
-                  transition: 'border-color 0.18s ease',
-                  '&:hover': { borderBottom: `2px solid ${theme.palette.primary.main}` },
-                }}
-              >
-                Create one free →
-              </Link>
             </Box>
 
             {/* Trust badges */}

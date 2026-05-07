@@ -1,19 +1,13 @@
 const API_URL = "http://localhost:5000/api/notifications";
 
-// Get auth token from localStorage
-const getAuthToken = () => {
-  return localStorage.getItem("token");
-};
-
 // Get all notifications
 export const getNotifications = async (limit = 20) => {
   try {
-    const token = getAuthToken();
     const response = await fetch(`${API_URL}?limit=${limit}`, {
       method: "GET",
+      credentials: 'include', // Enable cookies
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
       }
     });
 
@@ -32,12 +26,11 @@ export const getNotifications = async (limit = 20) => {
 // Mark notification as read
 export const markNotificationAsRead = async (notificationId) => {
   try {
-    const token = getAuthToken();
     const response = await fetch(`${API_URL}/${notificationId}/read`, {
       method: "PATCH",
+      credentials: 'include', // Enable cookies
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
       }
     });
 
@@ -56,12 +49,11 @@ export const markNotificationAsRead = async (notificationId) => {
 // Mark all notifications as read
 export const markAllNotificationsAsRead = async () => {
   try {
-    const token = getAuthToken();
     const response = await fetch(`${API_URL}/mark-all-read`, {
       method: "PATCH",
+      credentials: 'include', // Enable cookies
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
       }
     });
 
@@ -80,12 +72,11 @@ export const markAllNotificationsAsRead = async () => {
 // Get unread count
 export const getUnreadCount = async () => {
   try {
-    const token = getAuthToken();
     const response = await fetch(`${API_URL}/unread-count`, {
       method: "GET",
+      credentials: 'include', // Enable cookies
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
       }
     });
 
