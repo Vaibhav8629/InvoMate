@@ -16,7 +16,7 @@ const app = express();
 const server = http.createServer(app);
 
 const corsOptions = {
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: "GET, POST , PUT, DELETE, PATCH",
     credentials: true,
 }
@@ -67,7 +67,7 @@ app.use('/api/signature', signatureRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/test-notifications', testNotificationRoutes);
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
     server.listen(PORT, () => {
