@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Box, Typography, Paper, Table, TableHead, TableRow,
-  TableCell, TableBody, Chip, TextField, Button,
+  Box, Typography, Paper, Chip, TextField, Button,
   InputAdornment, Avatar, Skeleton, Tooltip, LinearProgress,
   useTheme,
 } from "@mui/material";
+import BorderGlow from "../components/React Bits/BorderGlow";
 
 import SearchIcon from "@mui/icons-material/Search";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
@@ -15,15 +15,7 @@ import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-import FilterListOutlinedIcon from "@mui/icons-material/FilterListOutlined";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
-import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
-
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip as RechartTooltip,
-  ResponsiveContainer, CartesianGrid, Cell,
-} from "recharts";
 
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
@@ -104,37 +96,19 @@ const StatCard = ({ icon, label, value, bg, iconColor, trend }) => {
   );
 };
 
-// ─── Custom Tooltip for chart ─────────────────────────────────────────────────
-const CustomTooltip = ({ active, payload, label }) => {
-  const theme = useTheme();
-  if (!active || !payload?.length) return null;
-  return (
-    <Box sx={{
-      background: theme.palette.text.primary,
-      borderRadius: "10px", px: "14px", py: "10px",
-      boxShadow: "0 8px 24px rgba(15,28,46,0.18)",
-    }}>
-      <Typography sx={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.65)", mb: "2px" }}>{label}</Typography>
-      <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#fff" }}>
-        {payload[0].value} units
-      </Typography>
-    </Box>
-  );
-};
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Invoices() {
-  const theme    = useTheme();
+  const theme = useTheme();
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
 
-  const [invoices, setInvoices]               = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [filteredInvoices, setFilteredInvoices] = useState([]);
-  const [search, setSearch]                   = useState("");
-  const [loading, setLoading]                 = useState(true);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const fetchInvoices = async () => {
-    const res   = await fetch("http://localhost:5000/api/auth/getinvoices", {
+    const res = await fetch("http://localhost:5000/api/auth/getinvoices", {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });
@@ -174,9 +148,8 @@ export default function Invoices() {
       .slice(0, 10);
   };
 
-  const chartData     = getProductSales();
-  const totalRevenue  = filteredInvoices.reduce((a, b) => a + Number(b.total  || 0), 0);
-  const totalProfit   = filteredInvoices.reduce((a, b) => a + Number(b.profit || 0), 0);
+  const totalRevenue = filteredInvoices.reduce((a, b) => a + Number(b.total || 0), 0);
+  const totalProfit = filteredInvoices.reduce((a, b) => a + Number(b.profit || 0), 0);
 
   const handleLogout = () => { logoutUser(); navigate("/login"); };
 
@@ -210,11 +183,11 @@ export default function Invoices() {
           <GridViewRoundedIcon sx={{ color: "#fff", fontSize: 20 }} />
         </Box>
 
-        <NavItem icon={<GridViewRoundedIcon fontSize="small" />}     label="Dashboard"   onClick={() => navigate("/dashboard")} />
-        <NavItem icon={<AddCircleOutlineIcon fontSize="small" />}    label="New Invoice" onClick={() => navigate("/createbill")} />
-        <NavItem icon={<ReceiptLongOutlinedIcon fontSize="small" />} label="Invoices"    onClick={() => navigate("/invoices")} active />
-        <NavItem icon={<Inventory2OutlinedIcon fontSize="small" />}  label="Products"    onClick={() => navigate("/products")} />
-        <NavItem icon={<StorefrontOutlinedIcon fontSize="small" />}  label="Profile"     onClick={() => navigate("/profile")} />
+        <NavItem icon={<GridViewRoundedIcon fontSize="small" />} label="Dashboard" onClick={() => navigate("/dashboard")} />
+        <NavItem icon={<AddCircleOutlineIcon fontSize="small" />} label="New Invoice" onClick={() => navigate("/createbill")} />
+        <NavItem icon={<ReceiptLongOutlinedIcon fontSize="small" />} label="Invoices" onClick={() => navigate("/invoices")} active />
+        <NavItem icon={<Inventory2OutlinedIcon fontSize="small" />} label="Products" onClick={() => navigate("/products")} />
+        <NavItem icon={<StorefrontOutlinedIcon fontSize="small" />} label="Profile" onClick={() => navigate("/profile")} />
 
         <Box sx={{ mt: "auto" }}>
           <NavItem icon={<LogoutIcon fontSize="small" />} label="Logout" onClick={handleLogout} />
@@ -307,125 +280,55 @@ export default function Invoices() {
         </Paper>
 
         {/* ── STAT CARDS ──────────────────────────────────────────────── */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", mb: "24px" }}>
-          <StatCard
-            icon={<ReceiptLongOutlinedIcon fontSize="small" />}
-            label="Total Invoices"
-            value={loading ? "—" : filteredInvoices.length}
-            bg={theme.palette.primary.light}
-            iconColor={theme.palette.primary.main}
-          />
-          <StatCard
-            icon={<CurrencyRupeeIcon fontSize="small" />}
-            label="Total Revenue"
-            value={loading ? "—" : `₹${totalRevenue.toLocaleString("en-IN")}`}
-            bg={theme.palette.success.light}
-            iconColor={theme.palette.success.main}
-            trend="All time"
-          />
-          <StatCard
-            icon={<TrendingUpIcon fontSize="small" />}
-            label="Total Profit"
-            value={loading ? "—" : `₹${totalProfit.toLocaleString("en-IN")}`}
-            bg={theme.palette.info.light}
-            iconColor={theme.palette.info.main}
-            trend="All time"
-          />
-        </Box>
+        <Box
+  sx={{
+    display: "grid",
+    gridTemplateColumns: {
+      xs: "1fr",
+      md: "repeat(3, 1fr)",
+    },
+    gap: "24px",
+    mb: "28px",
+  }}
+>
+  <StatCard
+    icon={<ReceiptLongOutlinedIcon />}
+    label="Total Invoices"
+    value={loading ? "—" : filteredInvoices.length}
+    bg="linear-gradient(135deg,#DBEAFE,#BFDBFE)"
+    iconColor="#2563EB"
+    trend="+12%"
+  />
+
+  <StatCard
+    icon={<CurrencyRupeeIcon />}
+    label="Total Revenue"
+    value={
+      loading
+        ? "—"
+        : `₹${totalRevenue.toLocaleString("en-IN")}`
+    }
+    bg="linear-gradient(135deg,#DCFCE7,#BBF7D0)"
+    iconColor="#10B981"
+    trend="+18%"
+  />
+
+  <StatCard
+    icon={<TrendingUpIcon />}
+    label="Total Profit"
+    value={
+      loading
+        ? "—"
+        : `₹${totalProfit.toLocaleString("en-IN")}`
+    }
+    bg="linear-gradient(135deg,#E0F2FE,#BAE6FD)"
+    iconColor="#0EA5E9"
+    trend="+9%"
+  />
+</Box>
 
         {/* ── PRODUCT SALES CHART ──────────────────────────────────────── */}
-        <Paper elevation={0} sx={{
-          border: `1px solid ${theme.palette.divider}`,
-          borderRadius: "16px", p: "24px",
-          background: theme.palette.background.paper,
-          mb: "24px",
-        }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "20px" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <Box sx={{
-                width: 36, height: 36, borderRadius: "10px",
-                background: theme.palette.primary.light,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: theme.palette.primary.main,
-              }}>
-                <BarChartOutlinedIcon fontSize="small" />
-              </Box>
-              <Box>
-                <Typography sx={{
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 700, fontSize: "1rem",
-                  color: theme.palette.text.primary,
-                }}>
-                  Product Sales
-                </Typography>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                  Top {chartData.length} products by quantity sold
-                </Typography>
-              </Box>
-            </Box>
-            <Chip
-              label={`${chartData.length} products`}
-              size="small"
-              sx={{
-                fontWeight: 700, fontSize: "0.7rem",
-                background: theme.palette.primary.light,
-                color: theme.palette.primary.main,
-                height: 24, borderRadius: "6px",
-              }}
-            />
-          </Box>
 
-          {loading ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} variant="rounded" height={28} sx={{ borderRadius: "8px" }} />
-              ))}
-            </Box>
-          ) : chartData.length === 0 ? (
-            <Box sx={{ textAlign: "center", py: "40px" }}>
-              <Typography sx={{ color: theme.palette.text.disabled, fontSize: "0.875rem" }}>
-                No sales data available
-              </Typography>
-            </Box>
-          ) : (
-            <ResponsiveContainer width="100%" height={Math.max(chartData.length * 48, 200)}>
-              <BarChart
-                data={chartData}
-                layout="vertical"
-                margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
-              >
-                <CartesianGrid
-                  horizontal={false}
-                  strokeDasharray="3 3"
-                  stroke={theme.palette.divider}
-                />
-                <XAxis
-                  type="number"
-                  tick={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fill: theme.palette.text.secondary }}
-                  axisLine={false} tickLine={false}
-                />
-                <YAxis
-                  dataKey="product" type="category" width={150}
-                  tick={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fill: theme.palette.text.primary, fontWeight: 600 }}
-                  axisLine={false} tickLine={false}
-                />
-                <RechartTooltip content={<CustomTooltip />} cursor={{ fill: theme.palette.primary.light, radius: 6 }} />
-                <Bar dataKey="sales" barSize={14} radius={[0, 8, 8, 0]}>
-                  {chartData.map((_, index) => (
-                    <Cell
-                      key={index}
-                      fill={index % 3 === 0
-                        ? theme.palette.primary.main
-                        : index % 3 === 1
-                        ? theme.palette.info.main
-                        : "#60A5FA"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </Paper>
 
         {/* ── INVOICES TABLE ───────────────────────────────────────────── */}
         <Paper elevation={0} sx={{
@@ -476,168 +379,186 @@ export default function Invoices() {
               ))}
             </Box>
           ) : (
-            <Table>
-              <TableHead>
-                <TableRow sx={{ background: theme.palette.background.default }}>
-                  {["Invoice", "Customer", "Phone", "Items", "Total", "Mode", "Profit", ""].map((h) => (
-                    <TableCell key={h} sx={{
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontWeight: 700, fontSize: "0.72rem",
-                      color: theme.palette.text.secondary,
-                      textTransform: "uppercase", letterSpacing: "0.05em",
-                      borderBottom: `1px solid ${theme.palette.divider}`,
-                      py: "12px",
-                    }}>
-                      {h}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
+            <>
+              {/* Table Header */}
+              <Box sx={{
+                display: "grid",
+                gridTemplateColumns: "140px 1.5fr 1fr 0.8fr 1fr 0.8fr 1fr",
+                gap: "16px",
+                px: "20px",
+                py: "14px",
+                background: theme.palette.background.default,
+                borderBottom: `1px solid ${theme.palette.divider}`,
+              }}>
+                {["INVOICE", "CUSTOMER", "PHONE", "ITEMS", "TOTAL", "MODE", "PROFIT"].map(h => (
+                  <Typography key={h} sx={{
+                    fontWeight: 600, fontSize: "0.68rem", color: theme.palette.text.secondary,
+                    letterSpacing: "0.08em", textTransform: "uppercase",
+                  }}>
+                    {h}
+                  </Typography>
+                ))}
+              </Box>
 
-              <TableBody>
-                {filteredInvoices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} sx={{ textAlign: "center", py: "48px", color: theme.palette.text.disabled, border: 0 }}>
-                      No invoices match your search
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredInvoices.map((row, idx) => (
-                    <TableRow
-                      key={idx}
-                      onClick={() => navigate(`/invoice/${row._id}`)}
-                      sx={{
-                        cursor: "pointer",
-                        transition: "background 0.15s ease",
-                        "&:hover": { background: theme.palette.background.default },
-                        "&:last-child td": { border: 0 },
-                      }}
+              {filteredInvoices.length === 0 ? (
+                <Box sx={{ py: "48px", textAlign: "center" }}>
+                  <Typography sx={{ color: theme.palette.text.disabled, fontSize: "0.875rem" }}>
+                    No invoices match your search
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ p: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {filteredInvoices.map((row, idx) => (
+                    <BorderGlow
+                      key={row._id || idx}
+                      color="#2563EB"
+                      glowSize={150}
+                      borderRadius={12}
                     >
-                      {/* Invoice number */}
-                      <TableCell>
-                        <Typography sx={{
-                          fontWeight: 700, fontSize: "0.85rem",
-                          color: theme.palette.primary.main,
+                      <Box
+                        onClick={() => navigate(`/invoice/${row._id}`)}
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: "140px 1.5fr 1fr 0.8fr 1fr 0.8fr 1fr",
+                          gap: "16px",
+                          alignItems: "center",
+                          px: "16px",
+                          py: "16px",
+                          background: "#FAFBFC",
+                          borderRadius: "12px",
+                          border: "1px solid #F1F5F9",
+                          cursor: "pointer",
+                          transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+                          animation: `fadeSlideUp 0.3s ease ${idx * 0.05}s both`,
+                          "&:hover": {
+                            background: "#F8FAFF",
+                            borderColor: "#DBEAFE",
+                            transform: "translateX(4px)",
+                            boxShadow: "0 4px 12px rgba(37,99,235,0.08)",
+                          },
+                          "@keyframes fadeSlideUp": {
+                            from: { opacity: 0, transform: "translateY(12px)" },
+                            to: { opacity: 1, transform: "translateY(0px)" },
+                          },
+                        }}
+                      >
+                        {/* Invoice Number */}
+                        <Box sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          background: "#EFF6FF",
+                          borderRadius: "10px",
+                          px: "12px",
+                          py: "10px",
                         }}>
-                          #{row.invoiceNumber}
-                        </Typography>
-                      </TableCell>
+                          <ReceiptLongOutlinedIcon sx={{ fontSize: 16, color: "#2563EB" }} />
+                          <Box>
+                            <Typography sx={{ fontSize: "0.65rem", color: "#64748B", fontWeight: 600 }}>
+                              INV-
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#2563EB", lineHeight: 1 }}>
+                              {row.invoiceNumber}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                      {/* Customer */}
-                      <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        {/* Customer */}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
                           <Avatar sx={{
-                            width: 30, height: 30,
-                            fontSize: "0.75rem", fontWeight: 700,
-                            background: theme.palette.primary.light,
-                            color: theme.palette.primary.main,
+                            width: 38, height: 38, fontSize: "0.8rem", fontWeight: 700,
+                            background: `linear-gradient(135deg, ${['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6'][idx % 5]}, ${['#DC2626', '#D97706', '#059669', '#2563EB', '#7C3AED'][idx % 5]})`,
+                            color: "#fff",
+                            border: "2px solid #fff",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                           }}>
                             {row.customerName?.[0]?.toUpperCase() ?? "?"}
                           </Avatar>
-                          <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: theme.palette.text.primary }}>
+                          <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1E293B" }}>
                             {row.customerName}
                           </Typography>
                         </Box>
-                      </TableCell>
 
-                      {/* Phone */}
-                      <TableCell sx={{ fontSize: "0.875rem", color: theme.palette.text.secondary }}>
-                        {row.phone}
-                      </TableCell>
-
-                      {/* Items */}
-                      <TableCell>
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: 260 }}>
-                          {row.items?.slice(0, 2).map((i, k) => (
-                            <Chip
-                              key={k}
-                              label={`${i.item} ×${i.qty}`}
-                              size="small"
-                              sx={{
-                                fontSize: "0.7rem", fontWeight: 600,
-                                background: theme.palette.background.default,
-                                color: theme.palette.text.secondary,
-                                border: `1px solid ${theme.palette.divider}`,
-                                height: 22, borderRadius: "6px",
-                              }}
-                            />
-                          ))}
-                          {row.items?.length > 2 && (
-                            <Chip
-                              label={`+${row.items.length - 2}`}
-                              size="small"
-                              sx={{
-                                fontSize: "0.7rem", fontWeight: 700,
-                                background: theme.palette.primary.light,
-                                color: theme.palette.primary.main,
-                                height: 22, borderRadius: "6px",
-                              }}
-                            />
-                          )}
-                        </Box>
-                      </TableCell>
-
-                      {/* Total */}
-                      <TableCell>
-                        <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: theme.palette.text.primary }}>
-                          ₹{Number(row.total).toLocaleString("en-IN")}
+                        {/* Phone */}
+                        <Typography sx={{ fontSize: "0.8rem", color: "#64748B", fontWeight: 500 }}>
+                          {row.phone || "+91 XXXXX XXXXX"}
                         </Typography>
-                      </TableCell>
 
-                      {/* Payment mode */}
-                      <TableCell>
-                        <Chip
-                          label={row.paymode || "—"}
-                          size="small"
-                          sx={{
-                            fontWeight: 700, fontSize: "0.72rem",
-                            height: 22, borderRadius: "6px",
-                            background: row.paymode === "Cash"
-                              ? theme.palette.success.light
-                              : row.paymode === "Online"
-                              ? theme.palette.info.light
-                              : theme.palette.background.default,
-                            color: row.paymode === "Cash"
-                              ? theme.palette.success.dark
-                              : row.paymode === "Online"
-                              ? theme.palette.info.dark
-                              : theme.palette.text.secondary,
-                          }}
-                        />
-                      </TableCell>
-
-                      {/* Profit */}
-                      <TableCell>
+                        {/* Items */}
                         <Box sx={{
-                          display: "inline-flex", alignItems: "center", gap: "4px",
-                          background: theme.palette.success.light,
-                          color: theme.palette.success.dark,
-                          borderRadius: "8px", px: "10px", py: "3px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          background: "#F1F5F9",
+                          borderRadius: "8px",
+                          px: "10px",
+                          py: "6px",
+                          width: "fit-content",
                         }}>
-                          <ArrowUpwardRoundedIcon sx={{ fontSize: 12 }} />
-                          <Typography sx={{ fontSize: "0.8rem", fontWeight: 700 }}>
-                            ₹{Number(row.profit).toLocaleString("en-IN")}
+                          <Inventory2OutlinedIcon sx={{ fontSize: 14, color: "#64748B" }} />
+                          <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#475569" }}>
+                            {row.items?.length ?? 0}
+                          </Typography>
+                          <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>
+                            items
                           </Typography>
                         </Box>
-                      </TableCell>
 
-                      {/* Open icon */}
-                      <TableCell>
+                        {/* Total */}
+                        <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A" }}>
+                          ₹{Number(row.total || 0).toLocaleString("en-IN")}
+                        </Typography>
+
+                        {/* Payment Mode */}
+                        <Chip
+                          icon={
+                            row.paymode === "Cash" ? <CurrencyRupeeIcon sx={{ fontSize: 14 }} /> :
+                            row.paymode === "UPI" ? <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>₹</Box> :
+                            row.paymode === "Card" ? <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>💳</Box> :
+                            <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>🏦</Box>
+                          }
+                          label={row.paymode || "Cash"}
+                          size="small"
+                          sx={{
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            height: 28,
+                            borderRadius: "8px",
+                            background: 
+                              row.paymode === "Cash" ? "#D1FAE5" :
+                              row.paymode === "UPI" ? "#E0E7FF" :
+                              row.paymode === "Card" ? "#DBEAFE" :
+                              "#FEF3C7",
+                            color:
+                              row.paymode === "Cash" ? "#065F46" :
+                              row.paymode === "UPI" ? "#4338CA" :
+                              row.paymode === "Card" ? "#1E40AF" :
+                              "#92400E",
+                            border: "none",
+                            "& .MuiChip-icon": {
+                              color: "inherit",
+                            },
+                          }}
+                        />
+
+                        {/* Profit */}
                         <Box sx={{
-                          width: 28, height: 28, borderRadius: "8px",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          color: theme.palette.text.disabled,
-                          "&:hover": { color: theme.palette.primary.main, background: theme.palette.primary.light },
-                          transition: "all 0.15s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          color: Number(row.profit || 0) >= 0 ? "#10B981" : "#EF4444",
                         }}>
-                          <OpenInNewOutlinedIcon sx={{ fontSize: 16 }} />
+                          <TrendingUpIcon sx={{ fontSize: 14 }} />
+                          <Typography sx={{ fontSize: "0.85rem", fontWeight: 700 }}>
+                            ₹{Number(row.profit || 0).toLocaleString("en-IN")}
+                          </Typography>
                         </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                      </Box>
+                    </BorderGlow>
+                  ))}
+                </Box>
+              )}
+            </>
           )}
         </Paper>
       </Box>

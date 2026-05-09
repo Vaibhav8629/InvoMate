@@ -5,15 +5,13 @@ import {
   Button,
   TextField,
   Paper,
-  Stack,
-  Divider,
   Tooltip,
   Avatar,
-  Chip,
+  IconButton,
   useTheme,
+  Grid,
 } from "@mui/material";
 
-import SignatureUpload from '../components/SignatureUpload';
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import InventoryIcon from "@mui/icons-material/Inventory2Outlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
@@ -47,9 +45,7 @@ const NavItem = ({ icon, label, onClick, active = false }) => {
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
-          color: active
-            ? theme.palette.primary.main
-            : theme.palette.text.secondary,
+          color: active ? theme.palette.primary.main : theme.palette.text.secondary,
           background: active ? theme.palette.primary.light : "transparent",
           transition: "all 0.18s ease",
           "&:hover": {
@@ -64,27 +60,111 @@ const NavItem = ({ icon, label, onClick, active = false }) => {
   );
 };
 
-// ─── Field Label ──────────────────────────────────────────────────────────────
-const FieldLabel = ({ children }) => {
+// ─── Input Card Component ──────────────────────────────────────────────────────
+const InputCard = ({ icon, label, value, disabled, onChange, onEdit, multiline = false }) => {
   const theme = useTheme();
+  
   return (
-    <Typography
-      sx={{
-        fontFamily: "'DM Sans', sans-serif",
-        fontSize: "0.72rem",
-        fontWeight: 700,
-        color: theme.palette.text.secondary,
-        mb: "6px",
-        letterSpacing: "0.06em",
-        textTransform: "uppercase",
-      }}
-    >
-      {children}
-    </Typography>
+    <Box sx={{ position: "relative" }}>
+      {/* Icon */}
+      <Box
+        sx={{
+          width: 48,
+          height: 48,
+          borderRadius: "14px",
+          background: "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: theme.palette.primary.main,
+          mb: 2,
+        }}
+      >
+        {icon}
+      </Box>
+      
+      {/* Label */}
+      <Typography
+        sx={{
+          fontSize: "0.75rem",
+          fontWeight: 700,
+          color: theme.palette.text.secondary,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          mb: 1,
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        {label}
+      </Typography>
+      
+      {/* Input with Edit Button */}
+      <Box sx={{ position: "relative" }}>
+        <TextField
+          fullWidth
+          value={value}
+          disabled={disabled}
+          onChange={onChange}
+          multiline={multiline}
+          rows={multiline ? 2 : 1}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "16px",
+              background: theme.palette.background.default,
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: "1rem",
+              fontWeight: 600,
+              pr: onEdit ? "50px" : "16px",
+              "& fieldset": {
+                borderColor: theme.palette.divider,
+              },
+              "&:hover fieldset": {
+                borderColor: disabled ? theme.palette.divider : theme.palette.primary.main,
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.palette.primary.main,
+                borderWidth: "1.5px",
+              },
+              "&.Mui-disabled": {
+                "& fieldset": {
+                  borderColor: theme.palette.divider,
+                },
+              },
+            },
+            "& .MuiInputBase-input.Mui-disabled": {
+              WebkitTextFillColor: theme.palette.text.primary,
+            },
+          }}
+        />
+        {onEdit && (
+          <Tooltip title={`Edit ${label}`}>
+            <IconButton
+              onClick={onEdit}
+              sx={{
+                position: "absolute",
+                right: 8,
+                top: multiline ? 8 : "50%",
+                transform: multiline ? "none" : "translateY(-50%)",
+                width: 36,
+                height: 36,
+                background: theme.palette.primary.light,
+                color: theme.palette.primary.main,
+                "&:hover": {
+                  background: theme.palette.primary.main,
+                  color: "#fff",
+                },
+              }}
+            >
+              <EditOutlinedIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    </Box>
   );
 };
 
-// ─── ShopProfile ──────────────────────────────────────────────────────────────
+// ─── Main Profile Component ────────────────────────────────────────────────────
 const ShopProfile = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -101,52 +181,25 @@ const ShopProfile = () => {
   const [pincode, setPincode] = useState("");
   const [shopCode, setShopCode] = useState("");
 
-  // ── Shared TextField sx ───────────────────────────────────────────────────
-  const fieldSx = {
-    "& .MuiOutlinedInput-root": {
-      fontFamily: "'DM Sans', sans-serif",
-      fontSize: "0.9rem",
-      borderRadius: "10px",
-      background: editing ? theme.palette.background.paper : theme.palette.background.default,
-      transition: "background 0.18s ease",
-      "& fieldset": {
-        borderColor: theme.palette.divider,
-      },
-      "&:hover fieldset": {
-        borderColor: editing ? theme.palette.primary.main : theme.palette.divider,
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: theme.palette.primary.main,
-        borderWidth: "1.5px",
-      },
-      "&.Mui-disabled": {
-        background: theme.palette.background.default,
-        "& fieldset": { borderColor: theme.palette.divider },
-      },
-    },
-    "& .MuiInputBase-input.Mui-disabled": {
-      WebkitTextFillColor: theme.palette.text.primary,
-      cursor: "default",
-    },
-  };
-
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchData = async () => {
-    const res = await fetch("http://localhost:5000/api/auth/findprofile", {
-      credentials: 'include', // Enable cookies
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await res.json();
-    setName(user?.username || data.ShopName || "");
-    setGSTNum(data.GSTNumber ?? "");
-    setAddress(data.Address ?? "");
-    setPhone(data.Phone ?? "");
-    setEmail(user?.email || data.Email || "");
-    setPincode(data.Pincode ?? "");
-    setShopCode(data.ShopCode ?? "");
-    setProfileExist(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/findprofile", {
+        credentials: 'include',
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      setName(user?.username || data.ShopName || "");
+      setGSTNum(data.GSTNumber ?? "");
+      setAddress(data.Address ?? "");
+      setPhone(data.Phone ?? "");
+      setEmail(user?.email || data.Email || "");
+      setPincode(data.Pincode ?? "");
+      setShopCode(data.ShopCode ?? "");
+      setProfileExist(true);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
   };
 
   useEffect(() => {
@@ -155,29 +208,31 @@ const ShopProfile = () => {
 
   // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    await fetch(
-      profileExist
-        ? "http://localhost:5000/api/auth/updateprofile"
-        : "http://localhost:5000/api/auth/createprofile",
-      {
-        method: profileExist ? "PUT" : "POST",
-        credentials: 'include', // Enable cookies
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ShopName: name,
-          GSTNumber: GSTNum,
-          Address: address,
-          Phone: phone,
-          Email: email,
-          Pincode: pincode,
-          ShopCode: shopCode,
-        }),
-      }
-    );
-    setEditing(false);
-    fetchData();
+    try {
+      await fetch(
+        profileExist
+          ? "http://localhost:5000/api/auth/updateprofile"
+          : "http://localhost:5000/api/auth/createprofile",
+        {
+          method: profileExist ? "PUT" : "POST",
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ShopName: name,
+            GSTNumber: GSTNum,
+            Address: address,
+            Phone: phone,
+            Email: email,
+            Pincode: pincode,
+            ShopCode: shopCode,
+          }),
+        }
+      );
+      setEditing(false);
+      fetchData();
+    } catch (error) {
+      console.error("Error saving profile:", error);
+    }
   };
 
   const handleLogout = () => {
@@ -212,43 +267,35 @@ const ShopProfile = () => {
           height: "100vh",
         }}
       >
-
-        {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
-        <Box sx={{
-          width: 72, flexShrink: 0, background: theme.palette.background.paper,
-          borderRight: `1px solid ${theme.palette.divider}`,
-          display: "flex", flexDirection: "column", alignItems: "center",
-          py: "24px", gap: "8px", position: "sticky", top: 0, height: "100vh",
-        }}>
-          <Box onClick={() => navigate("/home")} sx={{
-            width: 40, height: 40, borderRadius: "12px", background: theme.palette.primary.main,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            mb: "16px", cursor: "pointer", boxShadow: "0 4px 12px rgba(27,110,243,0.35)",
-          }}>
-            <GridViewRoundedIcon sx={{ color: "#fff", fontSize: 20 }} />
-          </Box>
-          <NavItem icon={<GridViewRoundedIcon fontSize="small" />} label="Dashboard" onClick={() => navigate("/dashboard")} />
-          <NavItem icon={<AddCircleOutlineIcon fontSize="small" />} label="New Invoice" onClick={() => navigate("/createbill")} />
-          <NavItem icon={<ReceiptLongOutlinedIcon fontSize="small" />} label="Invoices" onClick={() => navigate("/invoices")} />
-          <NavItem icon={<InventoryIcon fontSize="small" />} label="Products" onClick={() => navigate("/products")}  />
-          <NavItem icon={<StorefrontOutlinedIcon fontSize="small" />} label="Profile" onClick={() => navigate("/profile")} active/>
-          <Box sx={{ mt: "auto" }}>
-            <NavItem icon={<LogoutIcon fontSize="small" />} label="Logout" onClick={handleLogout} />
-          </Box>
+        <Box
+          onClick={() => navigate("/home")}
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: "12px",
+            background: theme.palette.primary.main,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mb: "16px",
+            cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(27,110,243,0.35)",
+          }}
+        >
+          <GridViewRoundedIcon sx={{ color: "#fff", fontSize: 20 }} />
         </Box>
-
+        <NavItem icon={<GridViewRoundedIcon fontSize="small" />} label="Dashboard" onClick={() => navigate("/dashboard")} />
+        <NavItem icon={<AddCircleOutlineIcon fontSize="small" />} label="New Invoice" onClick={() => navigate("/createbill")} />
+        <NavItem icon={<ReceiptLongOutlinedIcon fontSize="small" />} label="Invoices" onClick={() => navigate("/invoices")} />
+        <NavItem icon={<InventoryIcon fontSize="small" />} label="Products" onClick={() => navigate("/products")} />
+        <NavItem icon={<StorefrontOutlinedIcon fontSize="small" />} label="Profile" onClick={() => navigate("/profile")} active />
         <Box sx={{ mt: "auto" }}>
-          <NavItem
-            icon={<LogoutIcon fontSize="small" />}
-            label="Logout"
-            onClick={handleLogout}
-          />
+          <NavItem icon={<LogoutIcon fontSize="small" />} label="Logout" onClick={handleLogout} />
         </Box>
       </Box>
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
       <Box sx={{ flex: 1, p: "32px", overflow: "auto" }}>
-
         {/* Page title */}
         <Box sx={{ mb: "28px" }}>
           <Typography
@@ -309,7 +356,6 @@ const ShopProfile = () => {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              {/* Avatar */}
               <Avatar
                 sx={{
                   width: 64,
@@ -328,35 +374,18 @@ const ShopProfile = () => {
               >
                 {name ? name.charAt(0).toUpperCase() : "S"}
               </Avatar>
-              <SignatureUpload />
 
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Typography
-                    sx={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontWeight: 800,
-                      fontSize: "1.15rem",
-                      color: theme.palette.text.primary,
-                    }}
-                  >
-                    {name || "Shop Name"}
-                  </Typography>
-                  {shopCode && (
-                    <Chip
-                      label={shopCode}
-                      size="small"
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: "0.72rem",
-                        background: theme.palette.primary.light,
-                        color: theme.palette.primary.main,
-                        height: 22,
-                        borderRadius: "6px",
-                      }}
-                    />
-                  )}
-                </Box>
+                <Typography
+                  sx={{
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontWeight: 800,
+                    fontSize: "1.15rem",
+                    color: theme.palette.text.primary,
+                  }}
+                >
+                  {name || "Shop Name"}
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{ color: theme.palette.text.secondary, mt: "2px" }}
@@ -389,10 +418,13 @@ const ShopProfile = () => {
                 Edit Profile
               </Button>
             ) : (
-              <Stack direction="row" spacing={1.5}>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
                 <Button
                   startIcon={<CloseOutlinedIcon />}
-                  onClick={() => { setEditing(false); fetchData(); }}
+                  onClick={() => {
+                    setEditing(false);
+                    fetchData();
+                  }}
                   variant="outlined"
                   sx={{
                     textTransform: "none",
@@ -430,193 +462,106 @@ const ShopProfile = () => {
                 >
                   Save Changes
                 </Button>
-              </Stack>
+              </Box>
             )}
           </Box>
 
-          <Divider sx={{ borderColor: theme.palette.divider }} />
-
-          {/* ── FORM ──────────────────────────────────────────────────── */}
+          {/* ── FORM CARDS ──────────────────────────────────────────────── */}
           <Box sx={{ p: "32px" }}>
-
-            {/* Section label */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: "10px", mb: "24px" }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "8px",
-                  background: theme.palette.primary.light,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                <BadgeOutlinedIcon fontSize="small" />
-              </Box>
-              <Typography
-                sx={{
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 700,
-                  fontSize: "0.95rem",
-                  color: theme.palette.text.primary,
-                }}
-              >
-                Business Information
-              </Typography>
-              {editing && (
-                <Chip
-                  label="Editing"
-                  size="small"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: "0.7rem",
-                    background: theme.palette.warning.light,
-                    color: theme.palette.warning.main,
-                    height: 22,
-                    borderRadius: "6px",
-                    ml: "4px",
-                  }}
-                />
-              )}
-            </Box>
-
-            <Box
+            <Typography
               sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                gap: "20px",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                color: theme.palette.text.primary,
+                mb: 3,
               }}
             >
-              {/* Shop Name */}
-              <Box>
-                <FieldLabel>Shop Name</FieldLabel>
-                <TextField
-                  fullWidth
+              Business Information
+            </Typography>
+
+            {/* Row 1: Shop Name + GST Number */}
+            <Grid container spacing={4} sx={{ mb: 4 }}>
+              <Grid item xs={12} md={6}>
+                <InputCard
+                  icon={<StorefrontOutlinedIcon sx={{ fontSize: 24 }} />}
+                  label="Shop Name"
                   value={name}
                   disabled={true}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter shop name"
-                  sx={fieldSx}
                 />
-              </Box>
-
-              {/* GST Number */}
-              <Box>
-                <FieldLabel>GST Number</FieldLabel>
-                <TextField
-                  fullWidth
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <InputCard
+                  icon={<BadgeOutlinedIcon sx={{ fontSize: 24 }} />}
+                  label="GST Number"
                   value={GSTNum}
                   disabled={!editing}
                   onChange={(e) => setGSTNum(e.target.value)}
-                  placeholder="Enter GST number"
-                  sx={fieldSx}
+                  onEdit={editing ? null : () => setEditing(true)}
                 />
-              </Box>
+              </Grid>
+            </Grid>
 
-              {/* Shop Code */}
-              <Box>
-                <FieldLabel>Shop Code</FieldLabel>
-                <TextField
-                  fullWidth
-                  value={shopCode}
-                  disabled={!editing}
-                  onChange={(e) => setShopCode(e.target.value)}
-                  placeholder="Enter shop code"
-                  sx={fieldSx}
-                />
-              </Box>
-
-              {/* Phone */}
-              <Box>
-                <FieldLabel>Phone</FieldLabel>
-                <TextField
-                  fullWidth
+            {/* Row 2: Phone + Email */}
+            <Grid container spacing={4} sx={{ mb: 4 }}>
+              <Grid item xs={12} md={6}>
+                <InputCard
+                  icon={<PhoneOutlinedIcon sx={{ fontSize: 24 }} />}
+                  label="Phone Number"
                   value={phone}
                   disabled={!editing}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Enter phone number"
-                  InputProps={{
-                    startAdornment: (
-                      <PhoneOutlinedIcon
-                        sx={{
-                          fontSize: 18,
-                          color: theme.palette.text.secondary,
-                          mr: "8px",
-                        }}
-                      />
-                    ),
-                  }}
-                  sx={fieldSx}
+                  onEdit={editing ? null : () => setEditing(true)}
                 />
-              </Box>
-
-              {/* Email */}
-              <Box>
-                <FieldLabel>Email</FieldLabel>
-                <TextField
-                  fullWidth
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <InputCard
+                  icon={<EmailOutlinedIcon sx={{ fontSize: 24 }} />}
+                  label="Email Address"
                   value={email}
                   disabled={true}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter email address"
-                  InputProps={{
-                    startAdornment: (
-                      <EmailOutlinedIcon
-                        sx={{
-                          fontSize: 18,
-                          color: theme.palette.text.secondary,
-                          mr: "8px",
-                        }}
-                      />
-                    ),
-                  }}
-                  sx={fieldSx}
                 />
-              </Box>
+              </Grid>
+            </Grid>
 
-              {/* Pincode */}
-              <Box>
-                <FieldLabel>Pincode</FieldLabel>
-                <TextField
-                  fullWidth
+            {/* Row 3: Shop Code + Pincode */}
+            <Grid container spacing={4} sx={{ mb: 4 }}>
+              <Grid item xs={12} md={6}>
+                <InputCard
+                  icon={<QrCode2OutlinedIcon sx={{ fontSize: 24 }} />}
+                  label="Shop Code"
+                  value={shopCode}
+                  disabled={!editing}
+                  onChange={(e) => setShopCode(e.target.value)}
+                  onEdit={editing ? null : () => setEditing(true)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <InputCard
+                  icon={<LocationOnOutlinedIcon sx={{ fontSize: 24 }} />}
+                  label="Pincode"
                   value={pincode}
                   disabled={!editing}
                   onChange={(e) => setPincode(e.target.value)}
-                  placeholder="Enter pincode"
-                  sx={fieldSx}
+                  onEdit={editing ? null : () => setEditing(true)}
                 />
-              </Box>
+              </Grid>
+            </Grid>
 
-              {/* Address — full width */}
-              <Box sx={{ gridColumn: "1 / -1" }}>
-                <FieldLabel>Address</FieldLabel>
-                <TextField
-                  fullWidth
+            {/* Row 4: Address (Full Width) */}
+            <Grid container spacing={4}>
+              <Grid item xs={12}>
+                <InputCard
+                  icon={<LocationOnOutlinedIcon sx={{ fontSize: 24 }} />}
+                  label="Business Address"
                   value={address}
                   disabled={!editing}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter full address"
-                  multiline
-                  rows={2}
-                  InputProps={{
-                    startAdornment: (
-                      <LocationOnOutlinedIcon
-                        sx={{
-                          fontSize: 18,
-                          color: theme.palette.text.secondary,
-                          mr: "8px",
-                          alignSelf: "flex-start",
-                          mt: "10px",
-                        }}
-                      />
-                    ),
-                  }}
-                  sx={fieldSx}
+                  onEdit={editing ? null : () => setEditing(true)}
+                  multiline={true}
                 />
-              </Box>
-            </Box>
+              </Grid>
+            </Grid>
 
             {/* Footer info bar */}
             {!editing && (

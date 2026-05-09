@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
-  Box, Typography, Paper, Button, Table, TableHead, TableRow,
-  TableCell, TableBody, Tooltip, Avatar, Chip, useTheme,
-  Drawer, TextField, IconButton, CircularProgress,
+  Box, Typography, Paper, Button, Tooltip, Avatar, Chip,
+  Drawer, TextField, IconButton, CircularProgress, useTheme,
 } from "@mui/material";
 import DownloadReportButton from "../components/DownloadReportButton";
 import NotificationBell from "../components/NotificationBell";
+import BorderGlow from "../components/React Bits/BorderGlow";
+import CountUp from "../components/React Bits/CountUp";
 import InventoryIcon from "@mui/icons-material/Inventory2Outlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import DailyProfitChart from "../components/Chart";
@@ -17,15 +18,14 @@ import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import LogoutIcon from "@mui/icons-material/Logout";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
-import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
+
 
 // ─── Inject keyframes once ─────────────────────────────────────────────────────
 const injectKeyframes = () => {
@@ -398,17 +398,23 @@ const StatCard = ({ icon, label, value, accent, sub, index = 0 }) => (
     cursor: "default",
     animation: "fadeSlideUp 0.45s cubic-bezier(0.22,1,0.36,1) both",
     animationDelay: `${index * 0.07}s`,
-    transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease",
+    transition: "all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
     "&:hover": {
-      transform: "translateY(-4px) scale(1.01)",
-      boxShadow: `0 12px 32px ${accent}22, 0 2px 8px rgba(15,23,42,0.06)`,
+      transform: "translateY(-12px) translateZ(20px) scale(1.02)",
+      boxShadow: `0 20px 48px ${accent}35, 0 8px 24px ${accent}20, 0 2px 8px rgba(15,23,42,0.08)`,
+      border: `1px solid ${accent}40`,
+      zIndex: 10,
     },
     "&::before": {
       content: '""', position: "absolute", top: 0, left: 0, right: 0, height: "3px",
-      background: accent, borderRadius: "16px 16px 0 0",
-      transition: "height 0.25s ease",
+      background: `linear-gradient(90deg, ${accent}, ${accent}CC)`,
+      borderRadius: "16px 16px 0 0",
+      transition: "height 0.35s ease, background 0.35s ease",
     },
-    "&:hover::before": { height: "4px" },
+    "&:hover::before": { 
+      height: "5px",
+      background: `linear-gradient(90deg, ${accent}, ${accent}FF)`,
+    },
   }}>
     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
       <Box sx={{
@@ -422,7 +428,7 @@ const StatCard = ({ icon, label, value, accent, sub, index = 0 }) => (
         {icon}
       </Box>
       {sub && (
-        <Typography sx={{
+        <Typography component="span" sx={{
           fontSize: "0.7rem", fontWeight: 600, px: 1, py: 0.35, borderRadius: "6px",
           background: `${accent}12`, color: accent,
           transition: "background 0.2s ease",
@@ -430,7 +436,7 @@ const StatCard = ({ icon, label, value, accent, sub, index = 0 }) => (
       )}
     </Box>
     <Box>
-      <Typography sx={{
+      <Typography component="div" sx={{
         fontSize: "1.6rem", fontWeight: 800, color: "#0F172A", lineHeight: 1,
         fontFamily: "'Sora', sans-serif", letterSpacing: "-0.02em",
         transition: "color 0.2s ease",
@@ -469,6 +475,7 @@ const NavItem = ({ icon, label, onClick, active = false }) => (
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 const Dashboard = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
 
@@ -492,8 +499,8 @@ const Dashboard = () => {
       try {
         const res = await fetch("http://localhost:5000/api/auth/user", {
           credentials: 'include', // Enable cookies
-          headers: { 
-            "Content-Type": "application/json", 
+          headers: {
+            "Content-Type": "application/json",
           },
         });
         const data = await res.json();
@@ -551,6 +558,31 @@ const Dashboard = () => {
   const todayRevenue = todayInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
   const lowStockProducts = products.filter(p => Number(p.Stock) <= 5);
   const recentInvoices = [...invoices].reverse().slice(0, 5);
+
+  // Calculate week profit (last 7 days)
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 7);
+  const weekInvoices = invoices.filter(inv => {
+    const [day, month, year] = inv.date.split('-');
+    const invDate = new Date(year, month - 1, day);
+    return invDate >= sevenDaysAgo && invDate <= today;
+  });
+  const totalWeekProfit = weekInvoices.reduce((sum, inv) => sum + (Number(inv.profit) || 0), 0);
+  
+  // Calculate average profit
+  const avgProfit = invoices.length > 0 
+    ? invoices.reduce((sum, inv) => sum + (Number(inv.profit) || 0), 0) / invoices.length 
+    : 0;
+
+  // Calculate yesterday's profit for comparison
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const formattedYesterday = `${String(yesterday.getDate()).padStart(2, "0")}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${yesterday.getFullYear()}`;
+  const yesterdayInvoices = invoices.filter(inv => inv.date === formattedYesterday);
+  const yesterdayProfit = yesterdayInvoices.reduce((sum, inv) => sum + (Number(inv.profit) || 0), 0);
+  const changeVsYest = yesterdayProfit > 0 
+    ? (((todayProfit - yesterdayProfit) / yesterdayProfit) * 100).toFixed(1)
+    : 0;
 
   const businessData = {
     totalRevenue, todayProfit, todayRevenue,
@@ -748,13 +780,96 @@ const Dashboard = () => {
             gap: "16px", mb: "24px",
           }}>
             {[
-              { icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 18 }} />, label: "Total Invoices", value: invoices.length, accent: "#2563EB" },
-              { icon: <TrendingUpIcon sx={{ fontSize: 18 }} />, label: "Today's Profit", value: `₹${todayProfit.toLocaleString("en-IN")}`, accent: "#0EA5E9" },
-              { icon: <CurrencyRupeeIcon sx={{ fontSize: 18 }} />, label: "Total Revenue", value: `₹${totalRevenue.toLocaleString("en-IN")}`, accent: "#10B981" },
-              { icon: <TodayOutlinedIcon sx={{ fontSize: 18 }} />, label: "Today's Bills", value: todayInvoices.length, accent: "#F59E0B", sub: `₹${todayRevenue.toLocaleString("en-IN")}` },
-              { icon: <Inventory2OutlinedIcon sx={{ fontSize: 18 }} />, label: "Total Products", value: products.length, accent: "#8B5CF6", sub: `${lowStockProducts.length} low stock` },
+              {
+                icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 18 }} />,
+                label: "Total Invoices",
+                value: invoices.length,
+                accent: "#2563EB",
+                numeric: invoices.length,
+                prefix: "",
+              },
+              {
+                icon: <TrendingUpIcon sx={{ fontSize: 18 }} />,
+                label: "Today's Profit",
+                value: `₹${todayProfit.toLocaleString("en-IN")}`,
+                accent: "#0EA5E9",
+                numeric: todayProfit,
+                prefix: "₹",
+              },
+              {
+                icon: <CurrencyRupeeIcon sx={{ fontSize: 18 }} />,
+                label: "Total Revenue",
+                value: `₹${totalRevenue.toLocaleString("en-IN")}`,
+                accent: "#10B981",
+                numeric: totalRevenue,
+                prefix: "₹",
+              },
+              {
+                icon: <TodayOutlinedIcon sx={{ fontSize: 18 }} />,
+                label: "Today's Bills",
+                value: todayInvoices.length,
+                accent: "#F59E0B",
+                sub: `₹${todayRevenue.toLocaleString("en-IN")}`,
+                numeric: todayInvoices.length,
+                prefix: "",
+              },
+              {
+                icon: <Inventory2OutlinedIcon sx={{ fontSize: 18 }} />,
+                label: "Total Products",
+                value: products.length,
+                accent: "#8B5CF6",
+                sub: `${lowStockProducts.length} low stock`,
+                numeric: products.length,
+                prefix: "",
+              },
             ].map((card, i) => (
-              <StatCard key={card.label} {...card} index={i} />
+              <BorderGlow
+                key={card.label}
+                color={card.accent}
+                glowSize={120}
+                duration={6}
+              >
+                <StatCard
+                  {...card}
+                  index={i}
+                  value={
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "2px",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: "1.7rem",
+                          fontWeight: 800,
+                          color: "inherit",
+                          lineHeight: 1,
+                        }}
+                      >
+                        {card.prefix}
+                      </Typography>
+
+                      <Typography
+                        sx={{
+                          fontSize: "1.7rem",
+                          fontWeight: 800,
+                          color: "inherit",
+                          lineHeight: 1,
+                        }}
+                      >
+                        <CountUp
+                          from={0}
+                          to={card.numeric}
+                          separator=","
+                          duration={2}
+                        />
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </BorderGlow>
             ))}
           </Box>
 
@@ -766,41 +881,83 @@ const Dashboard = () => {
           }}>
             {/* Chart */}
             <Paper elevation={0} sx={{
-              borderRadius: "16px",
-              border: "1px solid #E8ECF0",
-              background: "#FFFFFF",
+              borderRadius: "20px",
+              border: "2px solid transparent",
+              background: "linear-gradient(#FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, #FCD34D 0%, #FBBF24 50%, #F59E0B 100%) border-box",
               overflow: "hidden",
+              position: "relative",
               animation: "fadeSlideUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.3s both",
-              transition: "box-shadow 0.25s ease",
-              "&:hover": { boxShadow: "0 8px 28px rgba(15,23,42,0.08)" },
+              transition: "all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+              "&:hover": {
+                transform: "translateY(-6px)",
+                boxShadow: "0 20px 48px rgba(251,191,36,0.20), 0 8px 16px rgba(245,158,11,0.12)",
+                border: "2px solid transparent",
+                background: "linear-gradient(#FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #FBBF24 100%) border-box",
+              },
             }}>
-              <Box sx={{
-                px: "22px", py: "16px", borderBottom: "1px solid #F1F5F9",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-              }}>
-                <Box>
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.925rem", color: "#0F172A", fontFamily: "'Sora', sans-serif" }}>
-                    Daily Profit
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", mt: "2px" }}>Last 30 days performance</Typography>
-                </Box>
-                <Box sx={{
-                  px: 1.5, py: 0.4, borderRadius: "7px",
-                  background: "#F0FDF4", color: "#10B981",
-                  fontSize: "0.72rem", fontWeight: 700,
-                  display: "flex", alignItems: "center", gap: 0.6,
-                }}>
-                  <Box sx={{
-                    width: 5, height: 5, borderRadius: "50%", background: "#10B981",
-                    animation: "pulseDot 1.6s ease-in-out infinite",
-                  }} />
-                  Live
-                </Box>
-              </Box>
-              <Box sx={{ p: "16px" }}>
-                <DailyProfitChart invoices={invoices} />
-              </Box>
-            </Paper>
+  <Box sx={{
+    px: "22px", py: "16px",
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+  }}>
+    <Box>
+      <Typography sx={{ fontWeight: 700, fontSize: "0.925rem", color: theme.palette.text.primary, fontFamily: "'Sora', sans-serif" }}>
+        Daily Profit
+      </Typography>
+      <Typography sx={{ fontSize: "0.75rem", color: theme.palette.text.secondary, mt: "2px" }}>
+        Last 7 days performance
+      </Typography>
+    </Box>
+    <Box sx={{
+      px: 1.5, py: 0.5,
+      borderRadius: "8px",
+      background: "rgba(16,185,129,0.1)",
+      border: "1px solid rgba(16,185,129,0.2)",
+      color: "#10B981",
+      fontSize: "0.72rem", fontWeight: 700,
+      display: "flex", alignItems: "center", gap: 0.7,
+    }}>
+      <Box sx={{
+        width: 7, height: 7, borderRadius: "50%", background: "#10B981",
+        position: "relative",
+        "&::after": {
+          content: '""', position: "absolute", inset: "-3px",
+          borderRadius: "50%", background: "rgba(16,185,129,0.35)",
+          animation: "pulseRing 1.6s ease-out infinite",
+        },
+      }} />
+      Live
+    </Box>
+  </Box>
+
+  {/* Stat pills row */}
+  <Box sx={{ display: "flex", borderBottom: `1px solid ${theme.palette.divider}` }}>
+    {[
+      { label: "Total week", value: `₹${totalWeekProfit.toLocaleString("en-IN")}`, change: "+12%", up: true },
+      { label: "Daily avg", value: `₹${avgProfit.toLocaleString("en-IN")}`, change: "+5%", up: true },
+      { label: "Today", value: `₹${todayProfit.toLocaleString("en-IN")}`, change: `${changeVsYest}%`, up: changeVsYest >= 0 },
+    ].map((s, i) => (
+      <Box key={i} sx={{
+        flex: 1, px: "16px", py: "12px",
+        borderRight: i < 2 ? `1px solid ${theme.palette.divider}` : "none",
+      }}>
+        <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: theme.palette.text.disabled, textTransform: "uppercase", letterSpacing: "0.06em", mb: "2px" }}>
+          {s.label}
+        </Typography>
+        <Typography sx={{ fontSize: "1rem", fontWeight: 800, fontFamily: "'Sora', sans-serif", color: theme.palette.text.primary }}>
+          {s.value}
+        </Typography>
+        <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: s.up ? "#10B981" : "#EF4444", mt: "1px" }}>
+          {s.up ? "▲" : "▼"} {s.change} vs prev
+        </Typography>
+      </Box>
+    ))}
+  </Box>
+
+  <Box sx={{ p: "16px" }}>
+    <DailyProfitChart invoices={invoices} />
+  </Box>
+</Paper>
 
             {/* Low Stock Panel */}
             <Paper elevation={0} sx={{
@@ -935,109 +1092,188 @@ const Dashboard = () => {
                 View all →
               </Button>
             </Box>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ background: "#FAFBFC" }}>
-                  {["Invoice", "Customer", "Date", "Items", "Subtotal", "Tax", "Total"].map(h => (
-                    <TableCell key={h} sx={{
-                      fontWeight: 600, fontSize: "0.7rem", color: "#94A3B8",
-                      letterSpacing: "0.06em", textTransform: "uppercase",
-                      borderBottom: "1px solid #F1F5F9", py: "12px",
-                    }}>{h}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {recentInvoices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: "48px" }}>
-                      <Box sx={{
-                        display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
-                        animation: "scaleIn 0.35s ease both",
-                      }}>
-                        <Typography sx={{ fontSize: "1.5rem" }}>🧾</Typography>
-                        <Typography sx={{ color: "#94A3B8", fontSize: "0.875rem", fontWeight: 500 }}>No invoices yet</Typography>
-                        <Button
-                          onClick={() => navigate("/createbill")} size="small"
-                          sx={{
-                            textTransform: "none", color: "#2563EB", fontWeight: 600, fontSize: "0.8rem", mt: 0.5,
-                            transition: "all 0.2s ease",
-                            "&:hover": { transform: "translateX(3px)" },
-                          }}>
-                          Create your first invoice →
-                        </Button>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  recentInvoices.map((inv, i) => (
-                    <TableRow key={i} sx={{
-                      animation: "rowSlideIn 0.32s ease both",
-                      animationDelay: `${0.5 + i * 0.06}s`,
-                      transition: "background 0.15s ease",
-                      "&:hover": { background: "#F8FAFF" },
-                      "&:hover td:first-of-type": { color: "#1D4ED8" },
-                      "& td": { borderBottom: "1px solid #F8FAFC" },
-                      "&:last-child td": { borderBottom: "none" },
+
+            {/* Table Header */}
+            <Box sx={{
+              display: "grid",
+              gridTemplateColumns: "140px 1.5fr 1fr 0.8fr 1fr 0.8fr 1fr",
+              gap: "16px",
+              px: "20px",
+              py: "14px",
+              background: "#F8FAFC",
+              borderBottom: "1px solid #F1F5F9",
+            }}>
+              {["INVOICE", "CUSTOMER", "PHONE", "ITEMS", "TOTAL", "MODE", "PROFIT"].map(h => (
+                <Typography key={h} sx={{
+                  fontWeight: 600, fontSize: "0.68rem", color: "#94A3B8",
+                  letterSpacing: "0.08em", textTransform: "uppercase",
+                }}>
+                  {h}
+                </Typography>
+              ))}
+            </Box>
+
+            {recentInvoices.length === 0 ? (
+              <Box sx={{ py: "48px" }}>
+                <Box sx={{
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
+                  animation: "scaleIn 0.35s ease both",
+                }}>
+                  <Typography sx={{ fontSize: "1.5rem" }}>🧾</Typography>
+                  <Typography sx={{ color: "#94A3B8", fontSize: "0.875rem", fontWeight: 500 }}>No invoices yet</Typography>
+                  <Button
+                    onClick={() => navigate("/createbill")} size="small"
+                    sx={{
+                      textTransform: "none", color: "#2563EB", fontWeight: 600, fontSize: "0.8rem", mt: 0.5,
+                      transition: "all 0.2s ease",
+                      "&:hover": { transform: "translateX(3px)" },
                     }}>
-                      <TableCell>
-                        <Typography sx={{
-                          fontWeight: 700, fontSize: "0.82rem", color: "#2563EB",
-                          fontFamily: "'Sora', sans-serif",
-                          transition: "color 0.15s ease",
-                        }}>
-                          #{inv.invoiceNumber}
+                    Create your first invoice →
+                  </Button>
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ p: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                {recentInvoices.map((inv, i) => (
+                  <Box
+                    key={i}
+                    onClick={() => navigate(`/invoice/${inv._id}`)}
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "140px 1.5fr 1fr 0.8fr 1fr 0.8fr 1fr",
+                      gap: "16px",
+                      alignItems: "center",
+                      px: "16px",
+                      py: "16px",
+                      background: "#FAFBFC",
+                      borderRadius: "12px",
+                      border: "1px solid #F1F5F9",
+                      cursor: "pointer",
+                      transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+                      animation: `fadeSlideUp 0.3s ease ${i * 0.05}s both`,
+                      "&:hover": {
+                        background: "#F8FAFF",
+                        borderColor: "#DBEAFE",
+                        transform: "translateX(4px)",
+                        boxShadow: "0 4px 12px rgba(37,99,235,0.08)",
+                      },
+                    }}
+                  >
+                    {/* Invoice Number */}
+                    <Box sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      background: "#EFF6FF",
+                      borderRadius: "10px",
+                      px: "12px",
+                      py: "10px",
+                    }}>
+                      <ReceiptLongOutlinedIcon sx={{ fontSize: 16, color: "#2563EB" }} />
+                      <Box>
+                        <Typography sx={{ fontSize: "0.65rem", color: "#64748B", fontWeight: 600 }}>
+                          INV-
                         </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: "9px" }}>
-                          <Avatar sx={{
-                            width: 28, height: 28, fontSize: "0.7rem", fontWeight: 700,
-                            background: "#EFF6FF", color: "#2563EB",
-                            transition: "transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-                            "tr:hover &": { transform: "scale(1.12)" },
-                          }}>
-                            {inv.customerName?.[0]?.toUpperCase() ?? "?"}
-                          </Avatar>
-                          <Typography sx={{ fontSize: "0.845rem", fontWeight: 500, color: "#1E293B" }}>
-                            {inv.customerName}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ fontSize: "0.82rem", color: "#64748B" }}>{inv.date}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{
-                          display: "inline-flex", alignItems: "center", justifyContent: "center",
-                          width: 24, height: 24, borderRadius: "6px",
-                          background: "#EFF6FF", color: "#2563EB",
-                          fontSize: "0.72rem", fontWeight: 700,
-                          transition: "transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-                          "tr:hover &": { transform: "scale(1.1)" },
-                        }}>
-                          {inv.items?.length ?? 0}
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={{ fontSize: "0.845rem", color: "#475569" }}>₹{inv.subtotal}</TableCell>
-                      <TableCell>
-                        <Typography sx={{ fontSize: "0.845rem", fontWeight: 600, color: "#F59E0B" }}>
-                          ₹{inv.tax}
+                        <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#2563EB", lineHeight: 1 }}>
+                          {inv.invoiceNumber}
                         </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{
-                          fontSize: "0.845rem", fontWeight: 700, color: "#10B981",
-                          fontFamily: "'Sora', sans-serif",
-                        }}>
-                          ₹{inv.total}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                      </Box>
+                    </Box>
+
+                    {/* Customer */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <Avatar sx={{
+                        width: 38, height: 38, fontSize: "0.8rem", fontWeight: 700,
+                        background: `linear-gradient(135deg, ${['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6'][i % 5]}, ${['#DC2626', '#D97706', '#059669', '#2563EB', '#7C3AED'][i % 5]})`,
+                        color: "#fff",
+                        border: "2px solid #fff",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      }}>
+                        {inv.customerName?.[0]?.toUpperCase() ?? "?"}
+                      </Avatar>
+                      <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1E293B" }}>
+                        {inv.customerName}
+                      </Typography>
+                    </Box>
+
+                    {/* Phone */}
+                    <Typography sx={{ fontSize: "0.8rem", color: "#64748B", fontWeight: 500 }}>
+                      {inv.phone || "+91 XXXXX XXXXX"}
+                    </Typography>
+
+                    {/* Items */}
+                    <Box sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      background: "#F1F5F9",
+                      borderRadius: "8px",
+                      px: "10px",
+                      py: "6px",
+                      width: "fit-content",
+                    }}>
+                      <Inventory2OutlinedIcon sx={{ fontSize: 14, color: "#64748B" }} />
+                      <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#475569" }}>
+                        {inv.items?.length ?? 0}
+                      </Typography>
+                      <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>
+                        items
+                      </Typography>
+                    </Box>
+
+                    {/* Total */}
+                    <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A" }}>
+                      ₹{Number(inv.total || 0).toLocaleString("en-IN")}
+                    </Typography>
+
+                    {/* Payment Mode */}
+                    <Chip
+                      icon={
+                        inv.paymode === "Cash" ? <CurrencyRupeeIcon sx={{ fontSize: 14 }} /> :
+                        inv.paymode === "UPI" ? <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>₹</Box> :
+                        inv.paymode === "Card" ? <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>💳</Box> :
+                        <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>🏦</Box>
+                      }
+                      label={inv.paymode || "Cash"}
+                      size="small"
+                      sx={{
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        height: 28,
+                        borderRadius: "8px",
+                        background: 
+                          inv.paymode === "Cash" ? "#D1FAE5" :
+                          inv.paymode === "UPI" ? "#E0E7FF" :
+                          inv.paymode === "Card" ? "#DBEAFE" :
+                          "#FEF3C7",
+                        color:
+                          inv.paymode === "Cash" ? "#065F46" :
+                          inv.paymode === "UPI" ? "#4338CA" :
+                          inv.paymode === "Card" ? "#1E40AF" :
+                          "#92400E",
+                        border: "none",
+                        "& .MuiChip-icon": {
+                          color: "inherit",
+                        },
+                      }}
+                    />
+
+                    {/* Profit */}
+                    <Box sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      color: Number(inv.profit || 0) >= 0 ? "#10B981" : "#EF4444",
+                    }}>
+                      <TrendingUpIcon sx={{ fontSize: 14 }} />
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700 }}>
+                        ₹{Number(inv.profit || 0).toLocaleString("en-IN")}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            )}
           </Paper>
         </Box>
       </Box>
