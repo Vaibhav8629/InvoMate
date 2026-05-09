@@ -7,11 +7,11 @@ const testCookie = async (req, res) => {
         console.log("🧪 Test Cookie Endpoint");
         console.log("Cookies received:", req.cookies);
         
-        // Set a test cookie
+        // Set a test cookie with cross-origin support
         res.cookie("testCookie", "testValue", {
             httpOnly: true,
-            secure: false, // Allow HTTP for testing
-            sameSite: "lax", // More permissive for testing
+            secure: true, // Required for cross-origin cookies
+            sameSite: "none", // Required for cross-origin cookies
             maxAge: 60000, // 1 minute
             path: "/",
         });
@@ -39,13 +39,13 @@ const register = async (req, res) => {
         
         console.log("🍪 Setting cookie for new user:", token.substring(0, 20) + "...");
         
-        // Set JWT as httpOnly cookie
+        // Set JWT as httpOnly cookie with cross-origin support
         res.cookie("token", token, {
             httpOnly: true,
-            secure: false, // Set to false for development (HTTP)
-            sameSite: "lax", // Changed from "strict" to "lax" for development
+            secure: true, // Required for cross-origin cookies
+            sameSite: "none", // Required for cross-origin cookies
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-            path: "/", // Explicitly set path
+            path: "/",
         });
         
         console.log("✅ Cookie set successfully for new user");
@@ -74,13 +74,13 @@ const login = async (req, res) => {
         
         console.log("🍪 Setting cookie with token:", token.substring(0, 20) + "...");
         
-        // Set JWT as httpOnly cookie
+        // Set JWT as httpOnly cookie with cross-origin support
         res.cookie("token", token, {
             httpOnly: true,
-            secure: false, // Set to false for development (HTTP)
-            sameSite: "lax", // Changed from "strict" to "lax" for development
+            secure: true, // Required for cross-origin cookies
+            sameSite: "none", // Required for cross-origin cookies
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-            path: "/", // Explicitly set path
+            path: "/",
         });
         
         console.log("✅ Cookie set successfully");
@@ -100,8 +100,8 @@ const logout = async (req, res) => {
     try {
         res.clearCookie("token", {
             httpOnly: true,
-            secure: false,
-            sameSite: "lax",
+            secure: true, // Required for cross-origin cookies
+            sameSite: "none", // Required for cross-origin cookies
             path: "/",
         });
         res.status(200).json({ msg: "Logout successful" });

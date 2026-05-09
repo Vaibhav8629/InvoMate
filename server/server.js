@@ -28,25 +28,14 @@ process.on("unhandledRejection", (err) => {
 
 
 // ===== CORS =====
-const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    process.env.FRONTEND_URL
-].filter(Boolean);
-
+// Render-compatible CORS configuration for cross-origin cookie-based authentication
 const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // Allow all origins (Render deployment compatible)
+    credentials: true, // Enable credentials (cookies, authorization headers)
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["Set-Cookie"],
+    optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
