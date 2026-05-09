@@ -6,46 +6,58 @@ const connectDB = require("./utils/db");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
+
 const reportRoutes = require("./routes/reports");
-const signatureRoutes = require('./routes/signature');
-const notificationRoutes = require('./routes/notificationRoutes');
-const testNotificationRoutes = require('./routes/testNotificationRoutes'); // For testing only
-const NotificationService = require('./services/notificationService');
+const signatureRoutes = require("./routes/signature");
+const notificationRoutes = require("./routes/notificationRoutes");
+const testNotificationRoutes = require("./routes/testNotificationRoutes");
+const NotificationService = require("./services/notificationService");
 
 const app = express();
 const server = http.createServer(app);
 
+
+// ===== ERROR HANDLING =====
+process.on("uncaughtException", (err) => {
+    console.error("Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+    console.error("Unhandled Rejection:", err);
+});
+
+
+// ===== CORS =====
 const corsOptions = {
     origin: "*",
-    methods: "GET, POST , PUT, DELETE, PATCH",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
-}
+};
 
 app.use(cors(corsOptions));
 
-// Parse cookies BEFORE body parsers
+
+// ===== MIDDLEWARE =====
 app.use(cookieParser());
 
-// Body parsers
 app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ limit: "100mb", extended: true }));
-// Body parsers
-app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ limit: "100mb", extended: true }));
+app.use(express.urlencoded({
+    limit: "100mb",
+    extended: true
+}));
 
-// Initialize Socket.io with CORS
+
+// ===== SOCKET.IO =====
 const io = new Server(server, {
     cors: corsOptions
 });
 
-// Socket.io connection handling
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-    // Join user to their personal room for targeted notifications
     socket.on("join", (userId) => {
         socket.join(userId);
-        console.log(`User ${userId} joined their notification room`);
+        console.log(`User ${userId} joined room`);
     });
 
     socket.on("disconnect", () => {
@@ -53,24 +65,48 @@ io.on("connection", (socket) => {
     });
 });
 
-// Make io accessible to routes
+
+// ===== APP VARIABLES =====
 app.set("io", io);
 
-// Initialize notification service
 const notificationService = new NotificationService(io);
 app.set("notificationService", notificationService);
 
-// Routes
-app.use("/api/auth", router);
-app.use('/api/reports', reportRoutes);
-app.use('/api/signature', signatureRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/test-notifications', testNotificationRoutes);
 
+// ===== ROUTES =====
+app.use("/api/auth", router);
+app.use("/api/reports", reportRoutes);
+app.use("/api/signature", signatureRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/test-notifications", testNotificationRoutes);
+
+
+// ===== TEST ROUTE =====
+app.get("/", (req, res) => {
+    res.send("Backend is running successfully");
+});
+
+
+// ===== PORT =====
 const PORT = process.env.PORT || 5000;
 
-connectDB().then(() => {
-    server.listen(PORT, () => {
-        console.log(`Server is running at PORT ${PORT}`);
-    })
-});
+
+// ===== START SERVER =====
+const startServer = async () => {
+    try {
+
+        await connectDB();
+        console.log("MongoDB Connected");
+
+        server.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+
+    } catch (error) {
+
+        console.error("Server startup failed:", error);
+
+    }
+};
+
+startServer();
