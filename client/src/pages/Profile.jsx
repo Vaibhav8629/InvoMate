@@ -284,7 +284,6 @@ const ShopProfile = () => {
         >
           <GridViewRoundedIcon sx={{ color: "#fff", fontSize: 20 }} />
         </Box>
-        <NavItem icon={<GridViewRoundedIcon fontSize="small" />} label="Dashboard" onClick={() => navigate("/dashboard")} />
         <NavItem icon={<AddCircleOutlineIcon fontSize="small" />} label="New Invoice" onClick={() => navigate("/createbill")} />
         <NavItem icon={<ReceiptLongOutlinedIcon fontSize="small" />} label="Invoices" onClick={() => navigate("/invoices")} />
         <NavItem icon={<InventoryIcon fontSize="small" />} label="Products" onClick={() => navigate("/products")} />

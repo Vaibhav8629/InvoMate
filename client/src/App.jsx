@@ -13,7 +13,6 @@ import Dashboard from './pages/Home';
 import InvoicePage from './pages/InvoicePage';
 import Invoices from './pages/InvoiceList';
 import InvoiceView from "./pages/InvoiceView";
-import AIAnalyticsDashboard from "./pages/AIAnalyticsDashboard";
 import NotFound404 from './pages/404Page';
 
 const App = () => {
@@ -31,7 +30,6 @@ const App = () => {
           <Route path='/createbill' element={<ProtectedRoute><InvoicePage /></ProtectedRoute>} />
           <Route path='/invoices' element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/invoice/:id" element={<ProtectedRoute><InvoiceView /></ProtectedRoute>} />
-          <Route path="/dashboard" element={<ProtectedRoute><AIAnalyticsDashboard /></ProtectedRoute>} />
           <Route path='*' element={<NotFound404 />} />
         </Routes>
       </BrowserRouter>

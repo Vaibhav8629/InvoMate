@@ -7,7 +7,6 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const reportRoutes = require("./routes/reports");
-const aiRoutes = require("./routes/aiDashboardRoutes");
 const signatureRoutes = require('./routes/signature');
 const notificationRoutes = require('./routes/notificationRoutes');
 const testNotificationRoutes = require('./routes/testNotificationRoutes'); // For testing only
@@ -62,7 +61,6 @@ const notificationService = new NotificationService(io);
 app.set("notificationService", notificationService);
 
 // Routes
-app.use("/api/ai", aiRoutes);
 app.use("/api/auth", router);
 app.use('/api/reports', reportRoutes);
 app.use('/api/signature', signatureRoutes);
