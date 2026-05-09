@@ -108,7 +108,7 @@ export default function Invoices() {
   const [loading, setLoading] = useState(true);
 
   const fetchInvoices = async () => {
-    const res = await fetch("http://localhost:5000/api/auth/getinvoices", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getinvoices`, {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });

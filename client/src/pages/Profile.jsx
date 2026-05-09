@@ -184,7 +184,7 @@ const ShopProfile = () => {
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchData = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/findprofile", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
         credentials: 'include',
         headers: { "Content-Type": "application/json" },
       });
@@ -211,8 +211,8 @@ const ShopProfile = () => {
     try {
       await fetch(
         profileExist
-          ? "http://localhost:5000/api/auth/updateprofile"
-          : "http://localhost:5000/api/auth/createprofile",
+          ? `${import.meta.env.VITE_API_URL}/api/auth/updateprofile`
+          : `${import.meta.env.VITE_API_URL}/api/auth/createprofile`,
         {
           method: profileExist ? "PUT" : "POST",
           credentials: 'include',

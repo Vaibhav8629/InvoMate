@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUser = async () => {
         try {
-            const res = await fetch("http://localhost:5000/api/auth/user", {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/user`, {
                 method: "GET",
                 credentials: "include", // Enable cookies
                 headers: {
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
 
     const logoutUser = async () => {
         try {
-            await fetch("http://localhost:5000/api/auth/logout", {
+            await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
                 method: "POST",
                 credentials: "include", // Enable cookies
                 headers: {

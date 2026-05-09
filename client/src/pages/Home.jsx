@@ -190,7 +190,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/user", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/user`, {
           credentials: 'include', // Enable cookies
           headers: {
             "Content-Type": "application/json",
@@ -211,7 +211,7 @@ const Dashboard = () => {
   const formattedToday = `${String(today.getDate()).padStart(2, "0")}-${String(today.getMonth() + 1).padStart(2, "0")}-${today.getFullYear()}`;
 
   const fetchInvoices = async () => {
-    const res = await fetch("http://localhost:5000/api/auth/getinvoices", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getinvoices`, {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });
@@ -220,7 +220,7 @@ const Dashboard = () => {
   };
 
   const fetchProducts = async () => {
-    const res = await fetch("http://localhost:5000/api/auth/getproducts", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getproducts`, {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });
@@ -229,7 +229,7 @@ const Dashboard = () => {
   };
 
   const fetchProfile = async () => {
-    const res = await fetch("http://localhost:5000/api/auth/findprofile", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });

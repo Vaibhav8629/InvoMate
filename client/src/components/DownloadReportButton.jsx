@@ -10,7 +10,7 @@ export default function DownloadReportButton({ date }) {
       // defaults to today if no date passed
       const dateStr = date || new Date().toISOString().split('T')[0];
 
-      const res = await fetch(`http://localhost:5000/api/reports/daily?date=${dateStr}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/daily?date=${dateStr}`, {
         credentials: 'include', // Enable cookies
         headers: {
           'Content-Type': 'application/json',

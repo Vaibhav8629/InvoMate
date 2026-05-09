@@ -30,7 +30,7 @@ export default function InvoiceView() {
 
   useEffect(() => {
     const fetchInvoice = async () => {
-      const res = await fetch(`http://localhost:5000/api/auth/invoice/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/invoice/${id}`, {
         credentials: 'include', // Enable cookies
         headers: { "Content-Type": "application/json" },
       });

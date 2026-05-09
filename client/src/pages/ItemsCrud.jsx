@@ -316,7 +316,7 @@ export default function ProductsTable() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/getproducts", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getproducts`, {
         credentials: 'include', // Enable cookies
         headers: { "Content-Type": "application/json" },
       });
@@ -333,7 +333,7 @@ export default function ProductsTable() {
   const handleAdd = async () => {
     try {
       const res = await fetch(
-        updateData ? "http://localhost:5000/api/auth/updateproduct" : "http://localhost:5000/api/auth/addproducts",
+        updateData ? `${import.meta.env.VITE_API_URL}/api/auth/updateproduct` : `${import.meta.env.VITE_API_URL}/api/auth/addproducts`,
         {
           method: updateData ? "PUT" : "POST",
           credentials: 'include', // Enable cookies
@@ -357,7 +357,7 @@ export default function ProductsTable() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/auth/deleteproduct/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/deleteproduct/${id}`, {
         method: "DELETE", 
         credentials: 'include', // Enable cookies
         headers: { "Content-Type": "application/json" },

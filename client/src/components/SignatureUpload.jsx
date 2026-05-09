@@ -18,7 +18,7 @@ export default function SignatureUpload({ onSaved }) {
   // Load existing signature on mount
   useEffect(() => {
     async function loadSig() {
-      const res  = await fetch('http://localhost:5000/api/signature', {
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/api/signature`, {
         credentials: 'include', // Enable cookies
         headers: { 'Content-Type': 'application/json' },
       });
@@ -77,7 +77,7 @@ export default function SignatureUpload({ onSaved }) {
   // ── Shared send function ────────────────────────────────────────────
   async function sendToServer(formData) {
     try {
-      const res  = await fetch('http://localhost:5000/api/signature/upload', {
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/api/signature/upload`, {
         method:  'POST',
         credentials: 'include', // Enable cookies
         body:    formData,
@@ -98,7 +98,7 @@ export default function SignatureUpload({ onSaved }) {
   async function deleteSig() {
     setLoading(true);
     try {
-      await fetch('http://localhost:5000/api/signature', {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/signature`, {
         method:  'DELETE',
         credentials: 'include', // Enable cookies
         headers: { 'Content-Type': 'application/json' },

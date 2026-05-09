@@ -129,7 +129,7 @@ const InvoicePage = () => {
   };
 
   const handleBarcodeScan = async (barcode) => {
-    const res = await fetch(`http://localhost:5000/api/auth/product/barcode/${barcode}`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/product/barcode/${barcode}`, {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });
@@ -140,7 +140,7 @@ const InvoicePage = () => {
 
   const handleSaveBill = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/saveinvoice", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/saveinvoice`, {
         method: "POST",
         credentials: 'include', // Enable cookies
         headers: { "Content-Type": "application/json" },
@@ -154,7 +154,7 @@ const InvoicePage = () => {
       });
       for (const item of itemsBuy) {
         try {
-          await fetch("http://localhost:5000/api/auth/updateproduct", {
+          await fetch(`${import.meta.env.VITE_API_URL}/api/auth/updateproduct`, {
             method: "PUT",
             credentials: 'include', // Enable cookies
             headers: { "Content-Type": "application/json" },
@@ -169,14 +169,14 @@ const InvoicePage = () => {
   };
 
   const fetchProfileData = async () => {
-    const res = await fetch("http://localhost:5000/api/auth/findprofile", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });
     const d = await res.json();
     setName(d.ShopName); setGST(d.GSTNumber); setAddress(d.Address);
 
-    const sigRes = await fetch("http://localhost:5000/api/signature", {
+    const sigRes = await fetch(`${import.meta.env.VITE_API_URL}/api/signature`, {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });
@@ -187,7 +187,7 @@ const InvoicePage = () => {
   };
 
   const fetchProductData = async () => {
-    const res = await fetch("http://localhost:5000/api/auth/getproducts", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getproducts`, {
       credentials: 'include', // Enable cookies
       headers: { "Content-Type": "application/json" },
     });
