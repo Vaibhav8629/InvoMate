@@ -16,6 +16,11 @@ const UserSchema = new mongoose.Schema({
     default: "user",
   },
 
+  subscription: {
+    type: Boolean,
+    default: true
+  },
+
   signature: {
     url:       { type: String, default: null },
     public_id: { type: String, default: null },

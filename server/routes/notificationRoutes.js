@@ -8,9 +8,11 @@ const {
   getUnreadCount
 } = require("../controllers/notificationController");
 const authMiddleware = require("../middleware/auth-middleware");
+const checkSubscription = require("../middleware/subscription-middleware");
 
 // All routes require authentication
 router.use(authMiddleware);
+router.use(checkSubscription);
 
 // Create notification (can be used internally or by admin)
 router.post("/create", createNotification);

@@ -3,9 +3,10 @@ const router     = express.Router();
 const User       = require('../models/Register');
 const { cloudinary, upload } = require('../config/cloudinary');
 const authMiddleware = require('../middleware/auth-middleware'); // your existing auth middleware
+const checkSubscription = require('../middleware/subscription-middleware');
 
 // Upload or replace signature
-router.post('/upload', authMiddleware, upload.single('signature'), async (req, res) => {
+router.post('/upload', authMiddleware, checkSubscription, upload.single('signature'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
 
@@ -32,7 +33,7 @@ router.post('/upload', authMiddleware, upload.single('signature'), async (req, r
 });
 
 // Get current signature
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, checkSubscription, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('signature');
     res.status(200).json({ signature: user.signature });
@@ -42,7 +43,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // Delete signature
-router.delete('/', authMiddleware, async (req, res) => {
+router.delete('/', authMiddleware, checkSubscription, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (user.signature?.public_id) {

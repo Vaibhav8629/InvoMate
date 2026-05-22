@@ -8,6 +8,7 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/auth-middleware");
+const checkSubscription = require("../middleware/subscription-middleware");
 const {
   createTestInvoiceNotification,
   createTestProductNotification,
@@ -19,6 +20,7 @@ const {
 
 // All routes require authentication
 router.use(authMiddleware);
+router.use(checkSubscription);
 
 /**
  * POST /api/test-notifications/invoice

@@ -10,6 +10,8 @@ import {
   IconButton,
   useTheme,
   Grid,
+  Divider,
+  Chip,
 } from "@mui/material";
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -26,6 +28,9 @@ import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import ContactMailOutlinedIcon from "@mui/icons-material/ContactMailOutlined";
+import TagOutlinedIcon from "@mui/icons-material/TagOutlined";
 
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
@@ -60,106 +65,157 @@ const NavItem = ({ icon, label, onClick, active = false }) => {
   );
 };
 
-// ─── Input Card Component ──────────────────────────────────────────────────────
-const InputCard = ({ icon, label, value, disabled, onChange, onEdit, multiline = false }) => {
+// ─── Section Header ────────────────────────────────────────────────────────────
+const SectionHeader = ({ icon, title, description }) => {
   const theme = useTheme();
-  
   return (
-    <Box sx={{ position: "relative" }}>
-      {/* Icon */}
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        mb: 3,
+        pb: 2,
+        borderBottom: `1px solid ${theme.palette.divider}`,
+      }}
+    >
       <Box
         sx={{
-          width: 48,
-          height: 48,
-          borderRadius: "14px",
-          background: "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)",
+          width: 36,
+          height: 36,
+          borderRadius: "10px",
+          background: theme.palette.primary.light,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           color: theme.palette.primary.main,
-          mb: 2,
+          flexShrink: 0,
         }}
       >
         {icon}
       </Box>
-      
-      {/* Label */}
-      <Typography
-        sx={{
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          color: theme.palette.text.secondary,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          mb: 1,
-          fontFamily: "'DM Sans', sans-serif",
-        }}
-      >
-        {label}
-      </Typography>
-      
-      {/* Input with Edit Button */}
-      <Box sx={{ position: "relative" }}>
-        <TextField
-          fullWidth
-          value={value}
-          disabled={disabled}
-          onChange={onChange}
-          multiline={multiline}
-          rows={multiline ? 2 : 1}
+      <Box>
+        <Typography
           sx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "16px",
-              background: theme.palette.background.default,
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: "1rem",
-              fontWeight: 600,
-              pr: onEdit ? "50px" : "16px",
-              "& fieldset": {
-                borderColor: theme.palette.divider,
-              },
-              "&:hover fieldset": {
-                borderColor: disabled ? theme.palette.divider : theme.palette.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-                borderWidth: "1.5px",
-              },
-              "&.Mui-disabled": {
-                "& fieldset": {
-                  borderColor: theme.palette.divider,
-                },
-              },
-            },
-            "& .MuiInputBase-input.Mui-disabled": {
-              WebkitTextFillColor: theme.palette.text.primary,
-            },
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontWeight: 700,
+            fontSize: "0.9rem",
+            color: theme.palette.text.primary,
+            lineHeight: 1.2,
           }}
-        />
-        {onEdit && (
-          <Tooltip title={`Edit ${label}`}>
-            <IconButton
-              onClick={onEdit}
-              sx={{
-                position: "absolute",
-                right: 8,
-                top: multiline ? 8 : "50%",
-                transform: multiline ? "none" : "translateY(-50%)",
-                width: 36,
-                height: 36,
-                background: theme.palette.primary.light,
-                color: theme.palette.primary.main,
-                "&:hover": {
-                  background: theme.palette.primary.main,
-                  color: "#fff",
-                },
-              }}
-            >
-              <EditOutlinedIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
+        >
+          {title}
+        </Typography>
+        {description && (
+          <Typography
+            sx={{
+              fontSize: "0.75rem",
+              color: theme.palette.text.secondary,
+              mt: "2px",
+            }}
+          >
+            {description}
+          </Typography>
         )}
       </Box>
+    </Box>
+  );
+};
+
+// ─── Field Component ───────────────────────────────────────────────────────────
+const Field = ({
+  icon,
+  label,
+  value,
+  disabled,
+  onChange,
+  multiline = false,
+  readOnly = false,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: "6px", mb: 0.75 }}>
+        <Box
+          sx={{
+            color: theme.palette.text.disabled,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {React.cloneElement(icon, { sx: { fontSize: 15 } })}
+        </Box>
+        <Typography
+          sx={{
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            color: theme.palette.text.secondary,
+            textTransform: "uppercase",
+            letterSpacing: "0.07em",
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+        >
+          {label}
+        </Typography>
+        {readOnly && (
+          <Chip
+            label="auto"
+            size="small"
+            sx={{
+              height: 16,
+              fontSize: "0.6rem",
+              fontWeight: 700,
+              letterSpacing: "0.05em",
+              background: theme.palette.action.hover,
+              color: theme.palette.text.disabled,
+              ml: 0.5,
+              "& .MuiChip-label": { px: "6px" },
+            }}
+          />
+        )}
+      </Box>
+      <TextField
+        fullWidth
+        value={value}
+        disabled={disabled || readOnly}
+        onChange={onChange}
+        multiline={multiline}
+        rows={multiline ? 3 : 1}
+        size="small"
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "10px",
+            background: readOnly
+              ? theme.palette.action.hover
+              : theme.palette.background.default,
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            "& fieldset": {
+              borderColor: theme.palette.divider,
+            },
+            "&:hover fieldset": {
+              borderColor:
+                disabled || readOnly
+                  ? theme.palette.divider
+                  : theme.palette.primary.main,
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: theme.palette.primary.main,
+              borderWidth: "1.5px",
+            },
+            "&.Mui-disabled": {
+              "& fieldset": { borderColor: theme.palette.divider },
+            },
+          },
+          "& .MuiInputBase-input.Mui-disabled": {
+            WebkitTextFillColor: readOnly
+              ? theme.palette.text.disabled
+              : theme.palette.text.primary,
+          },
+        }}
+      />
     </Box>
   );
 };
@@ -181,11 +237,10 @@ const ShopProfile = () => {
   const [pincode, setPincode] = useState("");
   const [shopCode, setShopCode] = useState("");
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchData = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
-        credentials: 'include',
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
@@ -193,7 +248,7 @@ const ShopProfile = () => {
       setGSTNum(data.GSTNumber ?? "");
       setAddress(data.Address ?? "");
       setPhone(data.Phone ?? "");
-      setEmail(user?.email || data.Email || "");
+      setEmail(data.email || "");
       setPincode(data.Pincode ?? "");
       setShopCode(data.ShopCode ?? "");
       setProfileExist(true);
@@ -202,11 +257,8 @@ const ShopProfile = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [user]);
+  useEffect(() => { fetchData(); }, [user]);
 
-  // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await fetch(
@@ -215,7 +267,7 @@ const ShopProfile = () => {
           : `${import.meta.env.VITE_API_URL}/api/auth/createprofile`,
         {
           method: profileExist ? "PUT" : "POST",
-          credentials: 'include',
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ShopName: name,
@@ -240,7 +292,6 @@ const ShopProfile = () => {
     navigate("/login");
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <Box
       sx={{
@@ -295,110 +346,85 @@ const ShopProfile = () => {
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
       <Box sx={{ flex: 1, p: "32px", overflow: "auto" }}>
-        {/* Page title */}
-        <Box sx={{ mb: "28px" }}>
-          <Typography
-            sx={{
-              fontSize: "1.5rem",
-              fontWeight: 800,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: theme.palette.text.primary,
-              lineHeight: 1.2,
-            }}
-          >
-            Shop Profile
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: theme.palette.text.secondary, mt: "4px", fontWeight: 500 }}
-          >
-            Manage your shop details and business information
-          </Typography>
-        </Box>
 
-        <Paper
-          elevation={0}
+        {/* ── PAGE HEADER ─────────────────────────────────────────────── */}
+        <Box
           sx={{
-            borderRadius: "20px",
-            border: `1px solid ${theme.palette.divider}`,
-            overflow: "hidden",
-            background: theme.palette.background.paper,
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            mb: "28px",
+            flexWrap: "wrap",
+            gap: 2,
           }}
         >
-          {/* ── BANNER ────────────────────────────────────────────────── */}
-          <Box
-            sx={{
-              height: 110,
-              background: `linear-gradient(120deg, ${theme.palette.primary.main} 0%, #60A5FA 60%, #93C5FD 100%)`,
-              position: "relative",
-              "&::after": {
-                content: '""',
-                position: "absolute",
-                inset: 0,
-                background:
-                  "repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 12px)",
-              },
-            }}
-          />
+          <Box>
+            <Typography
+              sx={{
+                fontSize: "1.4rem",
+                fontWeight: 800,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: theme.palette.text.primary,
+                lineHeight: 1.2,
+              }}
+            >
+              Shop Profile
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: theme.palette.text.secondary, mt: "4px", fontWeight: 500 }}
+            >
+              Manage your shop details and business information
+            </Typography>
+          </Box>
 
-          {/* ── PROFILE HEADER ────────────────────────────────────────── */}
-          <Box
-            sx={{
-              px: "32px",
-              pt: "20px",
-              pb: "20px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "16px",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <Avatar
+          {/* Action Buttons — top right */}
+          {!editing ? (
+            <Button
+              startIcon={<EditOutlinedIcon />}
+              onClick={() => setEditing(true)}
+              variant="contained"
+              sx={{
+                textTransform: "none",
+                fontFamily: "'DM Sans', sans-serif",
+                fontWeight: 600,
+                borderRadius: "10px",
+                px: "20px",
+                background: theme.palette.primary.main,
+                boxShadow: "0 4px 14px rgba(27,110,243,0.25)",
+                "&:hover": {
+                  background: theme.palette.primary.dark,
+                  boxShadow: "0 6px 20px rgba(27,110,243,0.35)",
+                },
+              }}
+            >
+              Edit Profile
+            </Button>
+          ) : (
+            <Box sx={{ display: "flex", gap: 1.5 }}>
+              <Button
+                startIcon={<CloseOutlinedIcon />}
+                onClick={() => { setEditing(false); fetchData(); }}
+                variant="outlined"
                 sx={{
-                  width: 64,
-                  height: 64,
-                  background: theme.palette.primary.main,
-                  color: "#fff",
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 800,
-                  fontSize: "1.5rem",
-                  boxShadow: "0 4px 16px rgba(27,110,243,0.30)",
-                  border: `3px solid ${theme.palette.background.paper}`,
-                  mt: "-44px",
-                  position: "relative",
-                  zIndex: 1,
+                  textTransform: "none",
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 600,
+                  borderRadius: "10px",
+                  px: "18px",
+                  borderColor: theme.palette.divider,
+                  color: theme.palette.text.secondary,
+                  "&:hover": {
+                    borderColor: theme.palette.text.secondary,
+                    background: theme.palette.background.default,
+                  },
                 }}
               >
-                {name ? name.charAt(0).toUpperCase() : "S"}
-              </Avatar>
-
-              <Box>
-                <Typography
-                  sx={{
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontWeight: 800,
-                    fontSize: "1.15rem",
-                    color: theme.palette.text.primary,
-                  }}
-                >
-                  {name || "Shop Name"}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: theme.palette.text.secondary, mt: "2px" }}
-                >
-                  {email || "Email not set"}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Action buttons */}
-            {!editing ? (
+                Cancel
+              </Button>
               <Button
-                startIcon={<EditOutlinedIcon />}
-                onClick={() => setEditing(true)}
+                startIcon={<SaveOutlinedIcon />}
+                onClick={handleSave}
                 variant="contained"
                 sx={{
                   textTransform: "none",
@@ -406,192 +432,253 @@ const ShopProfile = () => {
                   fontWeight: 600,
                   borderRadius: "10px",
                   px: "20px",
-                  background: theme.palette.primary.main,
-                  boxShadow: "0 4px 14px rgba(27,110,243,0.30)",
+                  background: theme.palette.success.main,
+                  boxShadow: "0 4px 14px rgba(34,197,94,0.25)",
                   "&:hover": {
-                    background: theme.palette.primary.dark,
-                    boxShadow: "0 6px 20px rgba(27,110,243,0.40)",
+                    background: theme.palette.success.dark,
+                    boxShadow: "0 6px 20px rgba(34,197,94,0.35)",
                   },
                 }}
               >
-                Edit Profile
+                Save Changes
               </Button>
-            ) : (
-              <Box sx={{ display: "flex", gap: 1.5 }}>
-                <Button
-                  startIcon={<CloseOutlinedIcon />}
-                  onClick={() => {
-                    setEditing(false);
-                    fetchData();
-                  }}
-                  variant="outlined"
-                  sx={{
-                    textTransform: "none",
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontWeight: 600,
-                    borderRadius: "10px",
-                    px: "18px",
-                    borderColor: theme.palette.divider,
-                    color: theme.palette.text.secondary,
-                    "&:hover": {
-                      borderColor: theme.palette.text.secondary,
-                      background: theme.palette.background.default,
-                    },
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  startIcon={<SaveOutlinedIcon />}
-                  onClick={handleSave}
-                  variant="contained"
-                  sx={{
-                    textTransform: "none",
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontWeight: 600,
-                    borderRadius: "10px",
-                    px: "20px",
-                    background: theme.palette.success.main,
-                    boxShadow: "0 4px 14px rgba(34,197,94,0.30)",
-                    "&:hover": {
-                      background: theme.palette.success.dark,
-                      boxShadow: "0 6px 20px rgba(34,197,94,0.40)",
-                    },
-                  }}
-                >
-                  Save Changes
-                </Button>
-              </Box>
-            )}
-          </Box>
+            </Box>
+          )}
+        </Box>
 
-          {/* ── FORM CARDS ──────────────────────────────────────────────── */}
-          <Box sx={{ p: "32px" }}>
-            <Typography
+        {/* ── IDENTITY CARD ───────────────────────────────────────────── */}
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "16px",
+            border: `1px solid ${theme.palette.divider}`,
+            mb: "20px",
+            overflow: "hidden",
+            background: theme.palette.background.paper,
+          }}
+        >
+          {/* Thin accent bar */}
+          <Box
+            sx={{
+              height: 4,
+              background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, #60A5FA 100%)`,
+            }}
+          />
+          <Box
+            sx={{
+              p: "20px 24px",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
+            <Avatar
               sx={{
+                width: 56,
+                height: 56,
+                background: theme.palette.primary.main,
+                color: "#fff",
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontWeight: 700,
-                fontSize: "0.95rem",
-                color: theme.palette.text.primary,
-                mb: 3,
+                fontWeight: 800,
+                fontSize: "1.3rem",
+                boxShadow: "0 4px 14px rgba(27,110,243,0.28)",
               }}
             >
-              Business Information
-            </Typography>
-
-            {/* Row 1: Shop Name + GST Number */}
-            <Grid container spacing={4} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={6}>
-                <InputCard
-                  icon={<StorefrontOutlinedIcon sx={{ fontSize: 24 }} />}
-                  label="Shop Name"
-                  value={name}
-                  disabled={true}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <InputCard
-                  icon={<BadgeOutlinedIcon sx={{ fontSize: 24 }} />}
-                  label="GST Number"
-                  value={GSTNum}
-                  disabled={!editing}
-                  onChange={(e) => setGSTNum(e.target.value)}
-                  onEdit={editing ? null : () => setEditing(true)}
-                />
-              </Grid>
-            </Grid>
-
-            {/* Row 2: Phone + Email */}
-            <Grid container spacing={4} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={6}>
-                <InputCard
-                  icon={<PhoneOutlinedIcon sx={{ fontSize: 24 }} />}
-                  label="Phone Number"
-                  value={phone}
-                  disabled={!editing}
-                  onChange={(e) => setPhone(e.target.value)}
-                  onEdit={editing ? null : () => setEditing(true)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <InputCard
-                  icon={<EmailOutlinedIcon sx={{ fontSize: 24 }} />}
-                  label="Email Address"
-                  value={email}
-                  disabled={true}
-                />
-              </Grid>
-            </Grid>
-
-            {/* Row 3: Shop Code + Pincode */}
-            <Grid container spacing={4} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={6}>
-                <InputCard
-                  icon={<QrCode2OutlinedIcon sx={{ fontSize: 24 }} />}
-                  label="Shop Code"
-                  value={shopCode}
-                  disabled={!editing}
-                  onChange={(e) => setShopCode(e.target.value)}
-                  onEdit={editing ? null : () => setEditing(true)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <InputCard
-                  icon={<LocationOnOutlinedIcon sx={{ fontSize: 24 }} />}
-                  label="Pincode"
-                  value={pincode}
-                  disabled={!editing}
-                  onChange={(e) => setPincode(e.target.value)}
-                  onEdit={editing ? null : () => setEditing(true)}
-                />
-              </Grid>
-            </Grid>
-
-            {/* Row 4: Address (Full Width) */}
-            <Grid container spacing={4}>
-              <Grid item xs={12}>
-                <InputCard
-                  icon={<LocationOnOutlinedIcon sx={{ fontSize: 24 }} />}
-                  label="Business Address"
-                  value={address}
-                  disabled={!editing}
-                  onChange={(e) => setAddress(e.target.value)}
-                  onEdit={editing ? null : () => setEditing(true)}
-                  multiline={true}
-                />
-              </Grid>
-            </Grid>
-
-            {/* Footer info bar */}
-            {!editing && (
-              <Box
+              {name ? name.charAt(0).toUpperCase() : "S"}
+            </Avatar>
+            <Box sx={{ flex: 1 }}>
+              <Typography
                 sx={{
-                  mt: "28px",
-                  p: "14px 20px",
-                  borderRadius: "12px",
-                  background: theme.palette.primary.light,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 800,
+                  fontSize: "1.1rem",
+                  color: theme.palette.text.primary,
+                  lineHeight: 1.2,
                 }}
               >
-                <EditOutlinedIcon
-                  sx={{ fontSize: 16, color: theme.palette.primary.main }}
-                />
-                <Typography
-                  sx={{
-                    fontSize: "0.82rem",
-                    fontWeight: 500,
-                    color: theme.palette.primary.main,
-                    fontFamily: "'DM Sans', sans-serif",
-                  }}
-                >
-                  Click <strong>Edit Profile</strong> to update your shop details.
-                </Typography>
-              </Box>
+                {name || "Shop Name"}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: theme.palette.text.secondary, mt: "3px", fontWeight: 500 }}
+              >
+                {email || "Email not set"}
+              </Typography>
+            </Box>
+            {GSTNum && (
+              <Chip
+                icon={<BadgeOutlinedIcon sx={{ fontSize: "14px !important" }} />}
+                label={`GST: ${GSTNum}`}
+                size="small"
+                sx={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 600,
+                  fontSize: "0.75rem",
+                  background: theme.palette.primary.light,
+                  color: theme.palette.primary.main,
+                  border: `1px solid ${theme.palette.primary.light}`,
+                }}
+              />
             )}
           </Box>
         </Paper>
+
+        {/* ── BUSINESS INFO CARD ──────────────────────────────────────── */}
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "16px",
+            border: `1px solid ${theme.palette.divider}`,
+            mb: "20px",
+            background: theme.palette.background.paper,
+            p: "24px",
+          }}
+        >
+          <SectionHeader
+            icon={<BusinessOutlinedIcon sx={{ fontSize: 18 }} />}
+            title="Business Information"
+            description="Legal and tax details for your shop"
+          />
+
+          <Grid container spacing={3}>
+            {/* Shop Name — read only */}
+            <Grid item xs={12} sm={6}>
+              <Field
+                icon={<StorefrontOutlinedIcon />}
+                label="Shop Name"
+                value={name}
+                disabled
+                readOnly
+              />
+            </Grid>
+            {/* GST Number */}
+            <Grid item xs={12} sm={6}>
+              <Field
+                icon={<BadgeOutlinedIcon />}
+                label="GST Number"
+                value={GSTNum}
+                disabled={!editing}
+                onChange={(e) => setGSTNum(e.target.value)}
+              />
+            </Grid>
+            {/* Pincode */}
+            <Grid item xs={12} sm={6}>
+              <Field
+                icon={<LocationOnOutlinedIcon />}
+                label="Pincode"
+                value={pincode}
+                disabled={!editing}
+                onChange={(e) => setPincode(e.target.value)}
+              />
+            </Grid>
+            {/* Address — full width */}
+            <Grid item xs={12}>
+              <Field
+                icon={<LocationOnOutlinedIcon />}
+                label="Business Address"
+                value={address}
+                disabled={!editing}
+                onChange={(e) => setAddress(e.target.value)}
+                multiline
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* ── CONTACT INFO CARD ───────────────────────────────────────── */}
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "16px",
+            border: `1px solid ${theme.palette.divider}`,
+            mb: "20px",
+            background: theme.palette.background.paper,
+            p: "24px",
+          }}
+        >
+          <SectionHeader
+            icon={<ContactMailOutlinedIcon sx={{ fontSize: 18 }} />}
+            title="Contact Details"
+            description="How customers and vendors can reach you"
+          />
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <Field
+                icon={<PhoneOutlinedIcon />}
+                label="Phone Number"
+                value={phone}
+                disabled={!editing}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Field
+                icon={<EmailOutlinedIcon />}
+                label="Email Address"
+                value={email}
+                disabled
+                readOnly
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* ── IDENTIFIERS CARD ────────────────────────────────────────── */}
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "16px",
+            border: `1px solid ${theme.palette.divider}`,
+            background: theme.palette.background.paper,
+            p: "24px",
+          }}
+        >
+          <SectionHeader
+            icon={<TagOutlinedIcon sx={{ fontSize: 18 }} />}
+            title="Shop Identifiers"
+            description="System codes used for invoicing and tracking"
+          />
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <Field
+                icon={<QrCode2OutlinedIcon />}
+                label="Shop Code"
+                value={shopCode}
+                disabled={!editing}
+                onChange={(e) => setShopCode(e.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* ── HINT BAR ────────────────────────────────────────────────── */}
+        {!editing && (
+          <Box
+            sx={{
+              mt: "20px",
+              p: "12px 18px",
+              borderRadius: "10px",
+              background: theme.palette.primary.light,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <EditOutlinedIcon sx={{ fontSize: 15, color: theme.palette.primary.main }} />
+            <Typography
+              sx={{
+                fontSize: "0.8rem",
+                fontWeight: 500,
+                color: theme.palette.primary.main,
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              Click <strong>Edit Profile</strong> at the top to update your shop details. Fields marked <strong>auto</strong> are managed by the system.
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );

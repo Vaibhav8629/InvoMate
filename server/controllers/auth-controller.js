@@ -70,6 +70,13 @@ const login = async (req, res) => {
         const user = await bcrypt.compare(password, userExist.password);
         if (!user) return res.status(401).json({ msg: "Invalid Credentials" });
         
+        if (userExist.subscription === false) {
+            return res.status(403).json({
+                success: false,
+                message: "Your subscription is inactive. Please contact admin."
+            });
+        }
+        
         const token = await userExist.generateToken();
         
         console.log("🍪 Setting cookie with token:", token.substring(0, 20) + "...");

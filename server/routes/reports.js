@@ -5,8 +5,9 @@ const Invoice = require('../models/Invoice');
 const Product = require('../models/Product');
 const generateDailyReport = require('../utils/generateDailyReport');
 const authMiddleware = require('../middleware/auth-middleware');
+const checkSubscription = require('../middleware/subscription-middleware');
 
-router.get('/daily', authMiddleware, async (req, res) => {
+router.get('/daily', authMiddleware, checkSubscription, async (req, res) => {
   try {
     const date = req.query.date ? new Date(req.query.date) : new Date();
     const dayStart = moment(date).startOf('day').toDate();
