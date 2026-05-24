@@ -1,446 +1,283 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import Divider from '@mui/material/Divider';
-import FormLabel from '@mui/material/FormLabel';
-import FormControl from '@mui/material/FormControl';
-import Link from '@mui/material/Link';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import InputAdornment from '@mui/material/InputAdornment';
-import Chip from '@mui/material/Chip';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../store/auth";
+import { API_ENDPOINTS } from "../config/api";
+import {
+  LayoutDashboard,
+  FileText,
+  Boxes,
+  TrendingUp,
+  Mail,
+  Lock,
+} from "lucide-react";
 
-import PersonOutlineIcon       from '@mui/icons-material/PersonOutline';
-import EmailOutlinedIcon       from '@mui/icons-material/EmailOutlined';
-import LockOutlinedIcon        from '@mui/icons-material/LockOutlined';
-import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import GridViewRoundedIcon     from '@mui/icons-material/GridViewRounded';
-import InventoryOutlinedIcon   from '@mui/icons-material/Inventory2Outlined';
-import TrendingUpOutlinedIcon  from '@mui/icons-material/TrendingUpOutlined';
-import ArrowForwardIcon        from '@mui/icons-material/ArrowForward';
-import CheckCircleOutlineIcon  from '@mui/icons-material/CheckCircleOutline';
-
-import { useTheme } from '@mui/material/styles';
-import { useAuth } from '../store/auth';
-import { useNavigate } from 'react-router-dom';
-
-// ── Feature bullet ─────────────────────────────────────────────────────────────
-const Feature = ({ icon, text }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-    <Box sx={{
-      width: 34, height: 34, borderRadius: '10px',
-      background: 'rgba(255,255,255,0.14)',
-      border: '1px solid rgba(255,255,255,0.22)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#fff', flexShrink: 0,
-    }}>
-      {icon}
-    </Box>
-    <Typography sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.88)', fontWeight: 500 }}>
-      {text}
-    </Typography>
-  </Box>
-);
-
-export default function SignIn() {
-  const theme = useTheme();
-  const { loginUser } = useAuth();
+export default function InvoMateLogin() {
   const navigate = useNavigate();
+  const { loginUser } = useAuth();
 
-  const [nameValue, setNameValue] = React.useState('');
-  const [emailValue, setEmailValue] = React.useState('');
-  const [passwordValue, setPasswordValue] = React.useState('');
+  const [formData, setFormData] = React.useState({
+    email: "",
+    password: "",
+  });
+  const [errorMessage, setErrorMessage] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-
-  const handleName = (e) => setNameValue(e.target.value);
-  const handleEmail = (e) => setEmailValue(e.target.value);
-  const handlePassword = (e) => setPasswordValue(e.target.value);
-
-  const validateInputs = () => {
-    let isValid = true;
-
-    if (!nameValue) {
-      setNameError(true);
-      setNameErrorMessage('Please enter a valid name.');
-      isValid = false;
-    } else {
-      setNameError(false);
-      setNameErrorMessage('');
-    }
-
-    if (!emailValue || !/\S+@\S+\.\S+/.test(emailValue)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
-    }
-
-    if (!passwordValue || passwordValue.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage('');
-    }
-
-    return isValid;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!validateInputs()) return;
+    setErrorMessage("");
+
+    if (!formData.email || !formData.password) {
+      setErrorMessage("Email and password are required.");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-        method: 'POST',
-        credentials: 'include', // Enable cookies
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(`${API_ENDPOINTS.AUTH}/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          username: nameValue,
-          email: emailValue,
-          password: passwordValue,
+          email: formData.email,
+          password: formData.password,
         }),
       });
 
       const data = await response.json();
 
       if (response.status === 200) {
-        await loginUser(); // Fetch user data after successful login
-        navigate('/home');
+        await loginUser();
+        navigate("/home");
       } else {
-        alert(data.msg || 'Invalid Credentials');
+        setErrorMessage(data.msg || "Login failed. Please try again.");
       }
     } catch (error) {
-      console.error('Error connecting to backend:', error);
-      alert('Error connecting to server');
+      console.error("Login error:", error);
+      setErrorMessage("Unable to reach the server. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  // ── Shared field sx ────────────────────────────────────────────────────────
-  const fieldSx = (hasError) => ({
-    '& .MuiOutlinedInput-root': {
-      fontFamily: "'DM Sans', sans-serif",
-      fontSize: '0.9rem',
-      borderRadius: '10px',
-      background: theme.palette.background.default,
-      transition: 'all 0.18s ease',
-      '& fieldset': {
-        borderColor: hasError ? theme.palette.error.main : theme.palette.divider,
-        borderWidth: '1.5px',
-      },
-      '&:hover fieldset': {
-        borderColor: hasError ? theme.palette.error.main : theme.palette.primary.main,
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: hasError ? theme.palette.error.main : theme.palette.primary.main,
-        borderWidth: '1.5px',
-      },
-      '&.Mui-focused': {
-        background: theme.palette.background.paper,
-        boxShadow: hasError
-          ? `0 0 0 3px ${theme.palette.error.main}18`
-          : `0 0 0 3px ${theme.palette.primary.main}18`,
-      },
-    },
-    '& .MuiFormHelperText-root': {
-      fontFamily: "'DM Sans', sans-serif",
-      fontSize: '0.75rem',
-      color: theme.palette.error.main,
-    },
-  });
-
-  const labelSx = {
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: '0.8rem',
-    fontWeight: 700,
-    color: theme.palette.text.secondary,
-    mb: '6px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  };
-
   return (
-    <>
-      <CssBaseline enableColorScheme />
+    <div className="h-screen overflow-hidden bg-[#07070B] text-white flex items-center justify-center p-3">
+      <div className="w-full h-full max-w-7xl rounded-3xl overflow-hidden border border-[#1d1d27] bg-[#0b0b12] shadow-2xl">
+        <div className="grid lg:grid-cols-2 h-full">
+          
+          {/* LEFT SIDE */}
+          <div className="relative flex flex-col justify-between p-8 lg:p-12 bg-gradient-to-br from-[#12101d] via-[#0a0a11] to-[#09090f]">
+            
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#c8a9ff] flex items-center justify-center">
+                <FileText className="text-black w-5 h-5" />
+              </div>
 
-      <Box sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        background: theme.palette.background.default,
-        fontFamily: "'DM Sans', sans-serif",
-      }}>
+              <h1 className="text-2xl font-bold">
+                Invo<span className="text-[#c8a9ff]">Mate</span>
+              </h1>
+            </div>
 
-        {/* ══════════════════════════════════
-            LEFT PANEL — branding / features
-        ══════════════════════════════════ */}
-        <Box sx={{
-          display: { xs: 'none', md: 'flex' },
-          width: '48%',
-          flexShrink: 0,
-          background: theme.palette.primary.main,
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          p: '48px',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
+            {/* Main Content */}
+            <div className="max-w-lg">
+              <h2 className="text-4xl lg:text-6xl font-extrabold leading-tight">
+                Welcome back to <br />
+                <span className="text-[#d7b8ff]">InvoMate</span>
+              </h2>
 
-          {/* Decorative circles */}
-          <Box sx={{ position: 'absolute', width: 380, height: 380, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', top: -120, right: -100, pointerEvents: 'none' }} />
-          <Box sx={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', bottom: -80, left: -60, pointerEvents: 'none' }} />
-          <Box sx={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', bottom: 160, right: 40, pointerEvents: 'none' }} />
-          {/* Diagonal grid pattern */}
-          <Box sx={{
-            position: 'absolute', inset: 0, pointerEvents: 'none',
-            backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 14px)',
-          }} />
+              <p className="mt-4 text-gray-400 text-base lg:text-lg leading-7">
+                Access your elite workspace and manage your global financial
+                operations with surgical precision.
+              </p>
 
-          {/* Top: Logo */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px', zIndex: 1 }}>
-            <Box sx={{
-              width: 44, height: 44, borderRadius: '12px',
-              background: 'rgba(255,255,255,0.18)',
-              border: '1.5px solid rgba(255,255,255,0.28)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <ReceiptLongOutlinedIcon sx={{ color: '#fff', fontSize: 22 }} />
-            </Box>
-            <Typography sx={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: '1.4rem', fontWeight: 900,
-              color: '#fff', letterSpacing: '-0.02em',
-            }}>
-              Invomate
-            </Typography>
-          </Box>
-
-          {/* Middle: Headline + features */}
-          <Box sx={{ zIndex: 1 }}>
-            <Typography sx={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: '2.1rem', fontWeight: 900,
-              color: '#fff', lineHeight: 1.2,
-              letterSpacing: '-0.03em', mb: '12px',
-            }}>
-              Welcome back
-              <br />
-              <Box component="span" sx={{ color: 'rgba(255,255,255,0.65)' }}>to Invomate.</Box>
-            </Typography>
-
-            <Typography sx={{
-              fontSize: '0.9375rem',
-              color: 'rgba(255,255,255,0.72)',
-              lineHeight: 1.65, mb: '36px',
-              maxWidth: 380,
-            }}>
-              Your billing dashboard, invoices, and inventory are waiting. Sign in to pick up where you left off.
-            </Typography>
-
-            {/* Feature list */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <Feature icon={<GridViewRoundedIcon sx={{ fontSize: 17 }} />} text="Real-time dashboard with profit insights" />
-              <Feature icon={<ReceiptLongOutlinedIcon sx={{ fontSize: 17 }} />} text="Generate & share GST invoices instantly" />
-              <Feature icon={<InventoryOutlinedIcon sx={{ fontSize: 17 }} />} text="Smart inventory with low-stock alerts" />
-              <Feature icon={<TrendingUpOutlinedIcon sx={{ fontSize: 17 }} />} text="Track revenue and profit per sale" />
-            </Box>
-          </Box>
-
-          {/* Bottom: Footer text */}
-          <Typography sx={{
-            fontSize: '0.78rem',
-            color: 'rgba(255,255,255,0.45)',
-            zIndex: 1,
-          }}>
-            © 2026 Invomate · Built for local businesses
-          </Typography>
-        </Box>
-
-        {/* ══════════════════════════════════
-            RIGHT PANEL — sign in form
-        ══════════════════════════════════ */}
-        <Box sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: '24px', sm: '48px', lg: '80px' },
-          py: '48px',
-          background: theme.palette.background.default,
-        }}>
-
-          {/* Mobile logo */}
-          <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: '12px', mb: '32px' }}>
-            <Box sx={{
-              width: 40, height: 40, borderRadius: '12px',
-              background: theme.palette.primary.main,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(27,110,243,0.35)',
-            }}>
-              <ReceiptLongOutlinedIcon sx={{ color: '#fff', fontSize: 20 }} />
-            </Box>
-            <Typography sx={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: '1.3rem', fontWeight: 900,
-              color: theme.palette.text.primary,
-            }}>
-              Invomate
-            </Typography>
-          </Box>
-
-          {/* Form container */}
-          <Box sx={{ width: '100%', maxWidth: 420 }}>
-
-            {/* Heading */}
-            <Box sx={{ mb: '32px' }}>
-              <Typography sx={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: '1.6rem', fontWeight: 900,
-                color: theme.palette.text.primary, lineHeight: 1.2, mb: '8px',
-              }}>
-                Welcome back 👋
-              </Typography>
-              <Typography sx={{ fontSize: '0.9rem', color: theme.palette.text.secondary, fontWeight: 500 }}>
-                Sign in to your account to continue.
-              </Typography>
-            </Box>
-
-            {/* Form */}
-            <Box
-              component="form"
-              onSubmit={handleSubmit}
-              noValidate
-              sx={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-            >
-
-              {/* Full Name */}
-              <FormControl>
-                <FormLabel htmlFor="username" sx={labelSx}>Full Name</FormLabel>
-                <TextField
-                  id="username"
-                  value={nameValue}
-                  onChange={handleName}
-                  error={nameError}
-                  helperText={nameErrorMessage}
-                  placeholder="John Doe"
-                  required
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonOutlineIcon sx={{ fontSize: 18, color: theme.palette.primary.main }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={fieldSx(nameError)}
+              {/* Features */}
+              <div className="mt-8 space-y-5">
+                <FeatureItem
+                  icon={<LayoutDashboard size={18} />}
+                  text="Real-time dashboard"
                 />
-              </FormControl>
 
-              {/* Email */}
-              <FormControl>
-                <FormLabel htmlFor="email" sx={labelSx}>Email Address</FormLabel>
-                <TextField
-                  id="email"
-                  value={emailValue}
-                  onChange={handleEmail}
-                  error={emailError}
-                  helperText={emailErrorMessage}
-                  placeholder="your@email.com"
-                  required
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailOutlinedIcon sx={{ fontSize: 18, color: theme.palette.primary.main }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={fieldSx(emailError)}
+                <FeatureItem
+                  icon={<FileText size={18} />}
+                  text="GST Invoices"
                 />
-              </FormControl>
 
-              {/* Password */}
-              <FormControl>
-                <FormLabel htmlFor="password" sx={labelSx}>Password</FormLabel>
-                <TextField
-                  id="password"
-                  type="password"
-                  value={passwordValue}
-                  onChange={handlePassword}
-                  error={passwordError}
-                  helperText={passwordErrorMessage}
-                  placeholder="••••••••"
-                  required
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlinedIcon sx={{ fontSize: 18, color: theme.palette.primary.main }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={fieldSx(passwordError)}
+                <FeatureItem
+                  icon={<Boxes size={18} />}
+                  text="Smart inventory"
                 />
-              </FormControl>
 
-              {/* Submit */}
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                endIcon={<ArrowForwardIcon />}
-                sx={{
-                  mt: '4px',
-                  background: theme.palette.primary.main,
-                  color: '#fff',
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '0.9375rem',
-                  textTransform: 'none',
-                  borderRadius: '12px',
-                  py: '13px',
-                  boxShadow: '0 4px 18px rgba(27,110,243,0.38)',
-                  letterSpacing: '0.01em',
-                  transition: 'all 0.20s ease',
-                  '&:hover': {
-                    background: theme.palette.primary.dark,
-                    boxShadow: '0 8px 28px rgba(27,110,243,0.48)',
-                    transform: 'translateY(-1px)',
-                  },
-                  '&:active': { transform: 'translateY(0px)' },
-                }}
-              >
-                Sign In
-              </Button>
-            </Box>
+                <FeatureItem
+                  icon={<TrendingUp size={18} />}
+                  text="Profit tracking"
+                />
+              </div>
+            </div>
 
-            {/* Trust badges */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: '20px', mt: '28px' }}>
-              {['GST Ready', 'Secure Login', 'AI insights'].map((badge) => (
-                <Box key={badge} sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <CheckCircleOutlineIcon sx={{ fontSize: 13, color: theme.palette.success.main }} />
-                  <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: theme.palette.text.secondary }}>
-                    {badge}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-    </>
+            {/* Bottom Line */}
+            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-green-400 via-[#d7b8ff] to-transparent" />
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="flex items-center justify-center bg-[#09090f] p-6 lg:p-10 overflow-hidden">
+            <div className="w-full max-w-md">
+              
+              <h2 className="text-3xl lg:text-4xl font-bold">
+                Welcome back
+              </h2>
+
+              <p className="text-gray-400 mt-2 text-sm lg:text-base">
+                Please enter your credentials to access your account.
+              </p>
+
+              {/* FORM */}
+              <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
+                
+                {/* Email */}
+                <InputField
+                  label="Work Email"
+                  type="email"
+                  placeholder="name@company.com"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  autoComplete="email"
+                  icon={<Mail size={17} className="text-gray-500" />}
+                />
+
+                {/* Password */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[10px] tracking-[0.25em] text-[#b89cff] uppercase">
+                      Security Key
+                    </label>
+
+                    <button
+                      type="button"
+                      className="text-xs text-[#c8a9ff]"
+                    >
+                      Forgot key?
+                    </button>
+                  </div>
+
+                  <div className="flex items-center bg-[#11111a] border border-[#1d1d27] rounded-xl px-4 h-12 focus-within:border-[#c8a9ff] transition">
+                    <Lock size={17} className="text-gray-500" />
+
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      autoComplete="current-password"
+                      placeholder="••••••••••"
+                      className="bg-transparent w-full px-3 outline-none text-white placeholder:text-gray-500 text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Checkbox */}
+                <div className="flex items-center gap-3 pt-1">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-[#c8a9ff]"
+                  />
+
+                  <span className="text-sm text-gray-400">
+                    Remember this device for 30 days
+                  </span>
+                </div>
+
+                {/* Button */}
+                {errorMessage ? (
+                  <p className="text-sm text-red-400">{errorMessage}</p>
+                ) : null}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-12 rounded-xl bg-[#d7b8ff] text-black font-semibold hover:opacity-90 transition"
+                >
+                  {isSubmitting ? "Signing In..." : "Sign In to Dashboard →"}
+                </button>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 py-1">
+                  <div className="flex-1 h-px bg-[#1d1d27]" />
+
+                  <span className="text-[10px] text-gray-500 tracking-[0.3em] uppercase">
+                    Secure Connect
+                  </span>
+
+                  <div className="flex-1 h-px bg-[#1d1d27]" />
+                </div>
+              </form>
+
+              {/* Bottom Tags */}
+              <div className="flex items-center justify-center gap-5 mt-7 text-[10px] uppercase tracking-[0.2em] text-gray-600">
+                <span>GST Ready</span>
+                <span>Secure Login</span>
+                <span>AI Insights</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
+
+/* INPUT FIELD */
+function InputField({
+  label,
+  type,
+  placeholder,
+  icon,
+  name,
+  value,
+  onChange,
+  autoComplete,
+}) {
+  return (
+    <div>
+      <label className="block text-[10px] tracking-[0.25em] text-[#b89cff] uppercase mb-2">
+        {label}
+      </label>
+
+      <div className="flex items-center bg-[#11111a] border border-[#1d1d27] rounded-xl px-4 h-12 focus-within:border-[#c8a9ff] transition">
+        {icon}
+
+        <input
+          type={type}
+          placeholder={placeholder}
+          name={name}
+          value={value}
+          onChange={onChange}
+          autoComplete={autoComplete}
+          className="bg-transparent w-full px-3 outline-none text-white placeholder:text-gray-500 text-sm"
+        />
+      </div>
+    </div>
+  );
+}
+
+/* FEATURE ITEM */
+function FeatureItem({ icon, text }) {
+  return (
+    <div className="flex items-center gap-4">
+      <div className="w-10 h-10 rounded-xl border border-[#242433] bg-[#11111a] flex items-center justify-center text-[#c8a9ff]">
+        {icon}
+      </div>
+
+      <span className="text-gray-300 text-base">
+        {text}
+      </span>
+    </div>
+  );
+} 

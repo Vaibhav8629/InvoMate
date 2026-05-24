@@ -1,256 +1,558 @@
 import { useState, useEffect } from "react";
-import {
-  Box, Typography, Paper, Button, Tooltip, Avatar, Chip, useTheme,
-} from "@mui/material";
-import DownloadReportButton from "../components/DownloadReportButton";
-import NotificationBell from "../components/NotificationBell";
-import BorderGlow from "../components/React Bits/BorderGlow";
-import CountUp from "../components/React Bits/CountUp";
-import InventoryIcon from "@mui/icons-material/Inventory2Outlined";
-import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
-import DailyProfitChart from "../components/Chart";
-import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
-import TodayOutlinedIcon from "@mui/icons-material/TodayOutlined";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import LogoutIcon from "@mui/icons-material/Logout";
-import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
+import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
 
+/* ─── Manual CSS injected once ─────────────────────────────────────────── */
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-// ─── Inject keyframes once ─────────────────────────────────────────────────────
-const injectKeyframes = () => {
-  if (document.getElementById("invomate-keyframes")) return;
-  const style = document.createElement("style");
-  style.id = "invomate-keyframes";
-  style.textContent = `
-    @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.94); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(18px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes msgIn {
-      from { opacity: 0; transform: translateY(8px) scale(0.96); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.3; transform: scale(0.75); }
-    }
-    @keyframes typingBounce {
-      0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
-      40%           { transform: translateY(-5px); opacity: 1; }
-    }
-    @keyframes ringPulse {
-      0%   { transform: scale(1); opacity: 0.7; }
-      100% { transform: scale(1.5); opacity: 0; }
-    }
-    @keyframes fabFloat {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(-4px); }
-    }
-    @keyframes shimmer {
-      0%   { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-    @keyframes navPop {
-      0%   { transform: scale(1); }
-      50%  { transform: scale(1.18); }
-      100% { transform: scale(1); }
-    }
-    @keyframes rowSlideIn {
-      from { opacity: 0; transform: translateX(-8px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-  `;
-  document.head.appendChild(style);
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-base:        #0d0d14;
+    --bg-sidebar:     #111118;
+    --bg-card:        #16161f;
+    --bg-card-hover:  #1c1c28;
+    --bg-topbar:      #111118;
+    --border:         rgba(255,255,255,0.07);
+    --border-active:  rgba(255,255,255,0.13);
+    --accent:         #7c5cfc;
+    --accent-soft:    rgba(124,92,252,0.18);
+    --accent-btn:     #8b6bfd;
+    --green:          #00e5a0;
+    --green-soft:     rgba(0,229,160,0.15);
+    --red:            #ff5a65;
+    --red-soft:       rgba(255,90,101,0.18);
+    --cyan:           #22d3ee;
+    --cyan-soft:      rgba(34,211,238,0.15);
+    --text-primary:   #f0f0f8;
+    --text-secondary: #8888a4;
+    --text-muted:     #55556a;
+    --chart-stroke:   #9b7eff;
+    --chart-fill-top: rgba(124,92,252,0.35);
+    --chart-fill-bot: rgba(124,92,252,0.00);
+  }
+
+  body { background: var(--bg-base); font-family: 'DM Sans', sans-serif; color: var(--text-primary); }
+
+  /* sidebar */
+  .sidebar {
+    width: 172px; min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0 0 20px 0;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 20;
+  }
+  .sidebar-logo {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text { font-size: 14px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-sub  { font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+
+  .create-btn {
+    margin: 14px 12px;
+    background: var(--bg-card);
+    border: 1px dashed var(--border-active);
+    border-radius: 10px;
+    padding: 10px 8px;
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; transition: background .2s;
+    color: var(--text-secondary); font-size: 12px; font-weight: 500; gap: 4px;
+  }
+  .create-btn:hover { background: var(--bg-card-hover); }
+  .create-btn .plus { font-size: 22px; color: var(--text-muted); line-height: 1; }
+
+  .nav-section { flex: 1; padding: 6px 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 9px;
+    font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    cursor: pointer; transition: all .15s; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+  .nav-item.active { background: var(--accent-soft); color: var(--text-primary); }
+  .nav-item.active svg { color: var(--accent); }
+
+  .sidebar-footer {
+    padding: 12px 12px 0;
+    border-top: 1px solid var(--border);
+  }
+  .help-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-muted);
+    padding: 8px 4px; cursor: pointer;
+  }
+  .user-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 4px; margin-top: 4px;
+  }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg,#7c5cfc,#4f3bc0);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .user-name { font-size: 12px; font-weight: 600; }
+  .user-plan { font-size: 10px; color: var(--accent); letter-spacing: .5px; text-transform: uppercase; }
+
+  /* topbar */
+  .topbar {
+    position: fixed; top: 0; left: 172px; right: 0; height: 52px;
+    background: var(--bg-topbar);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; z-index: 15;
+  }
+  .search-wrap {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 14px; width: 240px;
+  }
+  .search-wrap input {
+    background: transparent; border: none; outline: none;
+    color: var(--text-secondary); font-size: 12px; font-family: inherit; width: 100%;
+  }
+  .topbar-tabs { display: flex; align-items: center; gap: 4px; }
+  .tab {
+    padding: 6px 14px; font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer; border-radius: 8px;
+    position: relative; transition: color .15s;
+  }
+  .tab.active { color: var(--text-primary); }
+  .tab.active::after {
+    content: ''; position: absolute; bottom: -14px; left: 0; right: 0;
+    height: 2px; background: var(--text-primary); border-radius: 2px;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-secondary); font-size: 16px; transition: all .15s;
+  }
+  .icon-btn:hover { border-color: var(--border-active); color: var(--text-primary); }
+  .upgrade-btn {
+    background: var(--accent-btn); color: #fff;
+    border: none; border-radius: 8px; padding: 7px 16px;
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: opacity .15s;
+  }
+  .upgrade-btn:hover { opacity: .88; }
+
+  /* main */
+  .main { margin-left: 172px; padding-top: 52px; min-height: 100vh; }
+  .content { padding: 28px 28px 40px; }
+
+  /* stat cards */
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 6px;
+    transition: border-color .2s;
+  }
+  .stat-card:hover { border-color: var(--border-active); }
+  .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); }
+  .stat-icon { font-size: 15px; }
+  .stat-value { font-size: 26px; font-weight: 700; line-height: 1.1; font-family: 'JetBrains Mono', monospace; }
+  .stat-value.green { color: var(--green); }
+  .stat-sub { font-size: 10px; color: var(--text-muted); }
+  .stat-sub.positive { color: var(--green); }
+
+  /* chart card */
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 22px 22px 14px;
+  }
+  .live-badge {
+    background: rgba(0,229,160,0.12);
+    color: var(--green); font-size: 9px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 20px;
+    border: 1px solid rgba(0,229,160,0.2);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: blink 1.4s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* chart area */
+  .chart-svg { width: 100%; height: 200px; display: block; overflow: visible; }
+
+  /* inventory */
+  .inv-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px 20px 16px;
+  }
+  .inv-row { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .inv-row:last-child { border-bottom: none; }
+  .inv-name { font-size: 13px; font-weight: 500; }
+  .inv-count { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .inv-bar-track { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.07); margin-top: 8px; }
+  .inv-bar-fill  { height: 3px; border-radius: 2px; }
+
+  /* manage link */
+  .manage-link { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); cursor: pointer; }
+  .manage-link:hover { color: var(--text-secondary); }
+
+  /* date chip */
+  .date-chip {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 12px;
+    font-size: 12px; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Recent Transactions Table */
+  .rt-wrap {
+    background: #0f0f14;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 24px 28px 16px;
+    font-family: 'DM Sans', sans-serif;
+    color: #f0f0f8;
+    margin-top: 20px;
+  }
+  .rt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .rt-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    color: #ffffff;
+  }
+  .rt-header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .rt-filter-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+  }
+  .rt-filter-icon:hover {
+    opacity: 0.7;
+  }
+  .rt-filter-icon span {
+    display: block;
+    height: 2px;
+    background: #f0f0f8;
+    border-radius: 2px;
+  }
+  .rt-filter-icon span:nth-child(1) { width: 16px; }
+  .rt-filter-icon span:nth-child(2) { width: 11px; }
+  .rt-view-all {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #8b6bfd;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .rt-view-all:hover { opacity: .8; }
+  .rt-col-headers {
+    display: grid;
+    grid-template-columns: 140px 200px 120px 80px 140px 140px 1fr;
+    padding: 0 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    margin-bottom: 4px;
+  }
+  .rt-col-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #4a4a5e;
+  }
+  .rt-col-label.right { text-align: right; }
+  .rt-row {
+    display: grid;
+    grid-template-columns: 140px 200px 120px 80px 140px 140px 1fr;
+    align-items: center;
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background .2s;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .rt-row:last-child { border-bottom: none; }
+  .rt-row:hover { background: rgba(255,255,255,0.02); }
+  .rt-invoice {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e0e0e8;
+    letter-spacing: -0.3px;
+  }
+  .rt-customer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .rt-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+  .rt-customer-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  .rt-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+  .rt-badge.paid {
+    background: rgba(0,229,160,0.15);
+    color: #00e5a0;
+    border: 1px solid rgba(0,229,160,0.25);
+  }
+  .rt-badge.pending {
+    background: rgba(251,146,60,0.15);
+    color: #fb923c;
+    border: 1px solid rgba(251,146,60,0.25);
+  }
+  .rt-items {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #7a7a8e;
+    font-weight: 500;
+  }
+  .rt-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e0e0e8;
+  }
+  .rt-mode {
+    font-size: 12px;
+    color: #5a5a6e;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+  }
+  .rt-profit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #00e5a0;
+    text-align: right;
+  }
+`;
+
+/* ─── SVG Icons ──────────────────────────────────────────────────────────── */
+const Icon = ({ d, size = 15, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
+
+const ICONS = {
+  grid:    "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
+  file:    "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6",
+  bar:     "M18 20V10M12 20V4M6 20v-6",
+  credit:  "M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7zM2 12h20",
+  users:   "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+  settings:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
+  help:    "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01",
+  bell:    "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+  moon:    "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+  search:  "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35",
+  alert:   "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01",
+  cal:     "M3 4h18M3 20h18M8 4v16M16 4v16M3 8h5M3 12h5M3 16h5M16 8h5M16 12h5M16 16h5",
 };
 
-// ─── Stat Card ─────────────────────────────────────────────────────────────────
-const StatCard = ({ icon, label, value, accent, sub, index = 0 }) => (
-  <Paper elevation={0} sx={{
-    borderRadius: "16px",
-    p: "20px 22px",
-    background: "#FFFFFF",
-    border: "1px solid #E8ECF0",
-    display: "flex", flexDirection: "column", gap: "14px",
-    position: "relative", overflow: "hidden",
-    cursor: "default",
-    animation: "fadeSlideUp 0.45s cubic-bezier(0.22,1,0.36,1) both",
-    animationDelay: `${index * 0.07}s`,
-    transition: "all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-    "&:hover": {
-      transform: "translateY(-12px) translateZ(20px) scale(1.02)",
-      boxShadow: `0 20px 48px ${accent}35, 0 8px 24px ${accent}20, 0 2px 8px rgba(15,23,42,0.08)`,
-      border: `1px solid ${accent}40`,
-      zIndex: 10,
-    },
-    "&::before": {
-      content: '""', position: "absolute", top: 0, left: 0, right: 0, height: "3px",
-      background: `linear-gradient(90deg, ${accent}, ${accent}CC)`,
-      borderRadius: "16px 16px 0 0",
-      transition: "height 0.35s ease, background 0.35s ease",
-    },
-    "&:hover::before": { 
-      height: "5px",
-      background: `linear-gradient(90deg, ${accent}, ${accent}FF)`,
-    },
-  }}>
-    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-      <Box sx={{
-        width: 40, height: 40, borderRadius: "10px",
-        background: `${accent}18`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        color: accent,
-        transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease",
-        ".MuiPaper-root:hover &": { transform: "scale(1.12) rotate(-6deg)", background: `${accent}28` },
-      }}>
-        {icon}
-      </Box>
-      {sub && (
-        <Typography component="span" sx={{
-          fontSize: "0.7rem", fontWeight: 600, px: 1, py: 0.35, borderRadius: "6px",
-          background: `${accent}12`, color: accent,
-          transition: "background 0.2s ease",
-        }}>{sub}</Typography>
-      )}
-    </Box>
-    <Box>
-      <Typography component="div" sx={{
-        fontSize: "1.6rem", fontWeight: 800, color: "#0F172A", lineHeight: 1,
-        fontFamily: "'Sora', sans-serif", letterSpacing: "-0.02em",
-        transition: "color 0.2s ease",
-        ".MuiPaper-root:hover &": { color: accent },
-      }}>{value}</Typography>
-      <Typography sx={{ fontSize: "0.8rem", fontWeight: 500, color: "#64748B", mt: 0.6, fontFamily: "'DM Sans', sans-serif" }}>
-        {label}
-      </Typography>
-    </Box>
-  </Paper>
-);
+/* ─── Chart ──────────────────────────────────────────────────────────────── */
+function ProfitChart({ invoices }) {
+  // Calculate last 7 days profit data from invoices
+  const today = new Date();
+  const last7Days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (6 - i));
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    const dayName = d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
+    return { label: dayName, date: `${day}-${month}-${year}` };
+  });
 
-// ─── Sidebar Nav Item ──────────────────────────────────────────────────────────
-const NavItem = ({ icon, label, onClick, active = false }) => (
-  <Tooltip title={label} placement="right" arrow>
-    <Box onClick={onClick} sx={{
-      width: 42, height: 42, borderRadius: "11px",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      cursor: "pointer",
-      color: active ? "#2563EB" : "#94A3B8",
-      background: active ? "#EFF6FF" : "transparent",
-      transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-      position: "relative",
-      "&:hover": {
-        background: "#EFF6FF",
-        color: "#2563EB",
-        transform: "scale(1.12)",
-        boxShadow: "0 4px 12px rgba(37,99,235,0.18)",
-      },
-      "&:active": { transform: "scale(0.93)" },
-    }}>
-      {icon}
-    </Box>
-  </Tooltip>
-);
+  const pts = last7Days.map((day) => {
+    const dayInvoices = invoices.filter((inv) => inv.date === day.date);
+    const profit = dayInvoices.reduce((sum, inv) => sum + (Number(inv.profit) || 0), 0);
+    return profit / 100; // Scale down for visualization
+  });
 
-// ─── Dashboard ─────────────────────────────────────────────────────────────────
-const Dashboard = () => {
-  const theme = useTheme();
+  const W = 460, H = 170, PAD = 8;
+  const minY = Math.min(...pts, 0), maxY = Math.max(...pts, 1);
+  const xs = pts.map((_, i) => PAD + (i / (pts.length - 1)) * (W - PAD * 2));
+  const ys = pts.map(v => H - PAD - ((v - minY) / (maxY - minY || 1)) * (H - PAD * 2));
+  const linePath = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`).join(" ");
+  const areaPath = `${linePath} L${xs[xs.length-1]},${H} L${xs[0]},${H} Z`;
+  const days = last7Days.map(d => d.label);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <svg className="chart-svg" viewBox={`0 0 ${W} ${H + 28}`} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--chart-fill-top)" />
+            <stop offset="100%" stopColor="var(--chart-fill-bot)" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        {/* grid lines */}
+        {[0.25,0.5,0.75].map((r,i)=>(
+          <line key={i} x1={PAD} x2={W-PAD} y1={H * r} y2={H * r}
+            stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+        ))}
+        {/* area fill */}
+        <path d={areaPath} fill="url(#areaGrad)" />
+        {/* line */}
+        <path d={linePath} fill="none" stroke="var(--chart-stroke)" strokeWidth="2"
+          filter="url(#glow)" strokeLinejoin="round" strokeLinecap="round" />
+        {/* last point dot */}
+        {pts.length > 0 && <circle cx={xs[xs.length-1]} cy={ys[ys.length-1]} r="4"
+          fill="var(--chart-stroke)" filter="url(#glow)" />}
+        {/* day labels evenly spread */}
+        {days.map((d,i) => {
+          const x = PAD + (i / (days.length - 1)) * (W - PAD * 2);
+          return (
+            <text key={d} x={x} y={H + 20} textAnchor="middle"
+              fontSize="9" fill="var(--text-muted)" fontFamily="DM Sans"
+              letterSpacing="0.5">{d}</text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/* ─── Inventory bar ──────────────────────────────────────────────────────── */
+function InvRow({ name, count, total, color }) {
+  const pct = Math.min(100, (count / total) * 100);
+  return (
+    <div className="inv-row">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span className="inv-name">{name}</span>
+        <span className="inv-count">{count} Left</span>
+      </div>
+      <div className="inv-bar-track">
+        <div className="inv-bar-fill" style={{ width: `${pct}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Stat Card ──────────────────────────────────────────────────────────── */
+function StatCard({ label, value, sub, icon, valueClass = "" }) {
+  return (
+    <div className="stat-card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <span className="stat-label">{label}</span>
+        <span className="stat-icon" style={{ color: "var(--text-muted)" }}>{icon}</span>
+      </div>
+      <div className={`stat-value ${valueClass}`}>{value}</div>
+      {sub && <div className={`stat-sub ${sub.startsWith("+") ? "positive" : ""}`}>{sub}</div>}
+    </div>
+  );
+}
+
+/* ─── Main Component ─────────────────────────────────────────────────────── */
+export default function Home() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
-
+  const [activeTab, setActiveTab] = useState("Overview");
+  
+  // State for backend data
   const [invoices, setInvoices] = useState([]);
   const [products, setProducts] = useState([]);
-  const [shopName, setShopName] = useState("");
-  const [mounted, setMounted] = useState(false);
-  const [userId, setUserId] = useState(null);
+  const [shopName, setShopName] = useState("Elite Workspace");
+  const [loading, setLoading] = useState(true);
 
+  // Fetch data from backend
   useEffect(() => {
-    injectKeyframes();
-    // slight delay so entrance animations fire after mount
-    const t = setTimeout(() => setMounted(true), 30);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Fetch user ID
-  useEffect(() => {
-    const fetchUserId = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/user`, {
-          credentials: 'include', // Enable cookies
-          headers: {
-            "Content-Type": "application/json",
-          },
+        // Fetch invoices
+        const invRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getinvoices`, {
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
         });
-        const data = await res.json();
-        if (data._id) {
-          setUserId(data._id);
-        }
+        const invData = await invRes.json();
+        setInvoices(Array.isArray(invData) ? invData : []);
+
+        // Fetch products
+        const prodRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getproducts`, {
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
+        });
+        const prodData = await prodRes.json();
+        setProducts(Array.isArray(prodData) ? prodData : []);
+
+        // Fetch profile
+        const profRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
+        });
+        const profData = await profRes.json();
+        setShopName(profData.ShopName || "Elite Workspace");
       } catch (error) {
-        console.error("Error fetching user ID:", error);
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchUserId();
+
+    fetchData();
   }, []);
 
+  // Calculate metrics from backend data
   const today = new Date();
   const formattedToday = `${String(today.getDate()).padStart(2, "0")}-${String(today.getMonth() + 1).padStart(2, "0")}-${today.getFullYear()}`;
-
-  const fetchInvoices = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getinvoices`, {
-      credentials: 'include', // Enable cookies
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await res.json();
-    setInvoices(Array.isArray(data) ? data : []);
-  };
-
-  const fetchProducts = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getproducts`, {
-      credentials: 'include', // Enable cookies
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await res.json();
-    setProducts(Array.isArray(data) ? data : []);
-  };
-
-  const fetchProfile = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
-      credentials: 'include', // Enable cookies
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await res.json();
-    setShopName(data.ShopName ?? "");
-  };
-
-  useEffect(() => {
-    fetchInvoices();
-    fetchProducts();
-    fetchProfile();
-  }, []);
-
-  const handleLogout = () => { logoutUser(); navigate("/login"); };
-
-  const totalRevenue = invoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+  
   const todayInvoices = invoices.filter(inv => inv.date === formattedToday);
+  const totalRevenue = invoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
   const todayProfit = todayInvoices.reduce((sum, inv) => sum + (Number(inv.profit) || 0), 0);
   const todayRevenue = todayInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
   const lowStockProducts = products.filter(p => Number(p.Stock) <= 5);
-  const recentInvoices = [...invoices].reverse().slice(0, 5);
 
   // Calculate week profit (last 7 days)
   const sevenDaysAgo = new Date(today);
@@ -277,700 +579,278 @@ const Dashboard = () => {
     ? (((todayProfit - yesterdayProfit) / yesterdayProfit) * 100).toFixed(1)
     : 0;
 
-  const businessData = {
-    totalRevenue, todayProfit, todayRevenue,
-    totalInvoices: invoices.length,
-    todayInvoiceCount: todayInvoices.length,
-    totalProducts: products.length,
-    lowStockProducts: lowStockProducts.map(p => ({ name: p.item, stock: p.Stock })),
-    recentInvoices: recentInvoices.map(inv => ({
-      invoiceNumber: inv.invoiceNumber, customer: inv.customerName,
-      total: inv.total, profit: inv.profit, date: inv.date,
-    })),
-    products: products.map(p => ({
-      name: p.item, stock: p.Stock, price: p.Price, category: p.Category,
-    })),
+  useEffect(() => {
+    const tag = document.createElement("style");
+    tag.setAttribute("data-home-styles", "true");
+    tag.textContent = STYLES;
+    document.head.appendChild(tag);
+
+    return () => {
+      tag.remove();
+    };
+  }, []);
+
+  const tabs = ["Overview", "Reports", "History"];
+
+  // Prepare inventory data from products
+  const inventory = lowStockProducts.slice(0, 5).map(p => ({
+    name: p.item,
+    count: Number(p.Stock),
+    total: 50, // You can adjust this based on your needs
+    color: Number(p.Stock) === 0 ? "var(--red)" : Number(p.Stock) <= 2 ? "var(--red)" : Number(p.Stock) <= 5 ? "var(--accent)" : "var(--cyan)"
+  }));
+
+  // If no low stock, show message
+  if (inventory.length === 0) {
+    inventory.push({
+      name: "All products well-stocked ✓",
+      count: 100,
+      total: 100,
+      color: "var(--green)"
+    });
+  }
+
+  const handleLogout = () => {
+    logoutUser();
+    navigate("/login");
   };
 
-  const dayName = today.toLocaleDateString("en-IN", { weekday: "long" });
-  const dateStr = today.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" });
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 24, marginBottom: 12 }}>Loading...</div>
+          <div style={{ fontSize: 14, color: "var(--text-muted)" }}>Fetching your data</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Box sx={{
-      display: "flex", minHeight: "100vh",
-      background: "#F6F8FB",
-      fontFamily: "'DM Sans', sans-serif",
-      opacity: mounted ? 1 : 0,
-      transition: "opacity 0.3s ease",
-    }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-base)" }}>
+      <Sidebar shopName={shopName} onLogout={handleLogout} />
 
-      {/* ── SIDEBAR ─────────────────────────────────────────────────────────── */}
-      <Box sx={{
-        width: 68, flexShrink: 0,
-        background: "#FFFFFF",
-        borderRight: "1px solid #E8ECF0",
-        display: "flex", flexDirection: "column", alignItems: "center",
-        py: "20px", gap: "4px",
-        position: "sticky", top: 0, height: "100vh",
-        animation: "fadeIn 0.4s ease both",
-        boxShadow: "2px 0 16px rgba(15,23,42,0.04)",
-      }}>
-        {/* Logo */}
-        <Box onClick={() => navigate("/home")} sx={{
-          width: 38, height: 38, borderRadius: "10px",
-          background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          mb: "20px", cursor: "pointer",
-          boxShadow: "0 4px 14px rgba(37,99,235,0.35)",
-          transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-          animation: "scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
-          "&:hover": {
-            transform: "scale(1.12) rotate(-8deg)",
-            boxShadow: "0 8px 22px rgba(37,99,235,0.48)",
-          },
-          "&:active": { transform: "scale(0.94)" },
-        }}>
-          <GridViewRoundedIcon sx={{ color: "#fff", fontSize: 18 }} />
-        </Box>
+      {/* ── Topbar ──────────────────────────────────────────────────── */}
+      <header className="topbar" style={{ left: SIDEBAR_WIDTH }}>
+        {/* Search */}
+        <div className="search-wrap">
+          <Icon d={ICONS.search} size={13} color="var(--text-muted)" />
+          <input placeholder="Search invoices, clients..." />
+        </div>
 
-        {["New Invoice", "Invoices", "Products", "Profile"].map((label, i) => {
-          const icons = [
-            <AddCircleOutlineIcon fontSize="small" />,
-            <ReceiptLongOutlinedIcon fontSize="small" />,
-            <InventoryIcon fontSize="small" />,
-            <StorefrontOutlinedIcon fontSize="small" />,
-          ];
-          const paths = ["/createbill", "/invoices", "/products", "/profile"];
-          return (
-            <Box key={label} sx={{
-              animation: "fadeSlideUp 0.35s ease both",
-              animationDelay: `${0.12 + i * 0.06}s`,
-            }}>
-              <NavItem icon={icons[i]} label={label} onClick={() => navigate(paths[i])} />
-            </Box>
-          );
-        })}
+        {/* Tabs */}
+        <div className="topbar-tabs">
+          {tabs.map(t => (
+            <div
+              key={t}
+              className={`tab ${activeTab === t ? "active" : ""}`}
+              onClick={() => setActiveTab(t)}
+            >{t}</div>
+          ))}
+        </div>
 
-        {/* Divider */}
-        <Box sx={{
-          mt: "auto", pt: 2, borderTop: "1px solid #F1F5F9", width: "40px",
-          animation: "fadeIn 0.3s ease 0.5s both",
-        }} />
-        <Box sx={{ animation: "fadeSlideUp 0.35s ease 0.55s both" }}>
-          <NavItem icon={<LogoutIcon fontSize="small" />} label="Logout" onClick={handleLogout} />
-        </Box>
-      </Box>
+        {/* Right actions */}
+        <div className="topbar-right">
+          <div className="icon-btn"><Icon d={ICONS.bell} size={15} /></div>
+          <div className="icon-btn"><Icon d={ICONS.moon} size={15} /></div>
+          <button className="upgrade-btn">Upgrade Plan</button>
+        </div>
+      </header>
 
-      {/* ── MAIN ────────────────────────────────────────────────────────────── */}
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto" }}>
+      {/* ── Main Content ─────────────────────────────────────────────── */}
+      <main className="main" style={{ marginLeft: SIDEBAR_WIDTH }}>
+        <div className="content">
 
-        {/* ── TOP NAV ── */}
-        <Box sx={{
-          px: "32px", py: "16px",
-          background: "#FFFFFF",
-          borderBottom: "1px solid #E8ECF0",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          position: "sticky", top: 0, zIndex: 100,
-          animation: "fadeIn 0.35s ease 0.05s both",
-          boxShadow: "0 1px 12px rgba(15,23,42,0.05)",
-          backdropFilter: "blur(8px)",
-        }}>
-          <Box sx={{ animation: "fadeSlideUp 0.35s ease 0.1s both" }}>
-            <Typography sx={{
-              fontSize: "1.15rem", fontWeight: 700, color: "#0F172A",
-              fontFamily: "'Sora', sans-serif", lineHeight: 1.2,
-            }}>
-              {shopName ? `Good day, ${shopName} 👋` : "Dashboard"}
-            </Typography>
-            <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8", mt: "2px", fontFamily: "'DM Sans', sans-serif" }}>
-              {dayName}, {dateStr}
-            </Typography>
-          </Box>
+          {/* Greeting row */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+            <div>
+              <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", marginBottom: 4 }}>
+                Good day, {shopName} 👋
+              </h1>
+              <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                Here is what's happening with your workspace today.
+              </p>
+            </div>
+            <div className="date-chip">
+              <Icon d={ICONS.cal} size={13} color="var(--text-muted)" />
+              {today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </div>
+          </div>
 
-          <Box sx={{
-            display: "flex", gap: "10px", alignItems: "center",
-            animation: "fadeSlideUp 0.35s ease 0.15s both",
-          }}>
-            {/* Notification Bell */}
-            {userId && <NotificationBell userId={userId} />}
+          {/* Stat cards row */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 14, marginBottom: 20 }}>
+            <StatCard
+              label="Total Invoices"
+              value={invoices.length.toLocaleString()}
+              sub={`+${todayInvoices.length} today`}
+              icon={<Icon d={ICONS.file} size={15} />}
+            />
+            <StatCard
+              label="Today's Profit"
+              value={`₹${todayProfit.toLocaleString("en-IN")}`}
+              sub={`${changeVsYest >= 0 ? '+' : ''}${changeVsYest}% vs yesterday`}
+              icon={<span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />}
+              valueClass="green"
+            />
+            <StatCard
+              label="Total Revenue"
+              value={`₹${totalRevenue.toLocaleString("en-IN")}`}
+              sub=""
+              icon={<Icon d={ICONS.credit} size={15} />}
+              valueClass="green"
+            />
+            <StatCard
+              label="Today's Bills"
+              value={todayInvoices.length.toString()}
+              sub={`Total: ₹${todayRevenue.toLocaleString("en-IN")}`}
+              icon={<Icon d={ICONS.file} size={15} />}
+            />
+            <StatCard
+              label="Total Products"
+              value={products.length.toString()}
+              sub={`${lowStockProducts.length} low stock items`}
+              icon={<Icon d={ICONS.bar} size={15} />}
+            />
+          </div>
 
-            <Button
-              startIcon={<AddCircleOutlineIcon sx={{ fontSize: "16px !important" }} />}
-              onClick={() => navigate("/createbill")}
-              variant="contained"
-              sx={{
-                textTransform: "none", fontWeight: 600,
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: "0.84rem",
-                borderRadius: "10px", px: "16px", height: 38,
-                background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
-                boxShadow: "0 4px 14px rgba(37,99,235,0.3)",
-                transition: "all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-                "&:hover": {
-                  boxShadow: "0 8px 24px rgba(37,99,235,0.44)",
-                  transform: "translateY(-2px) scale(1.02)",
-                },
-                "&:active": { transform: "scale(0.97)" },
-              }}>
-              New Invoice
-            </Button>
+          {/* Bottom two-column layout */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16 }}>
 
-            {/* DOWNLOAD REPORT BUTTON */}
-            <Box sx={{
-              "& button": {
-                height: 38,
-                borderRadius: "10px",
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                padding: "0 14px",
-                background: "#10B981",
-                color: "#fff",
-                border: "none",
-                cursor: "pointer",
-                transition: "all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-              },
-              "& button:hover": {
-                background: "#059669",
-                transform: "translateY(-2px) scale(1.02)",
-                boxShadow: "0 6px 18px rgba(16,185,129,0.38)",
-              },
-              "& button:active": { transform: "scale(0.97)" },
-            }}>
-              <DownloadReportButton date={new Date().toISOString().split('T')[0]} />
-            </Box>
+            {/* Chart card */}
+            <div className="chart-card">
+              {/* Chart header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontSize: 16, fontWeight: 700 }}>Daily Profit Analytics</span>
+                    <span className="live-badge">
+                      <span className="live-dot" />
+                      Live Updates
+                    </span>
+                  </div>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                    Net profit trends for current billing cycle
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: 20, textAlign: "right" }}>
+                  <div>
+                    <div style={{ fontSize: 9, letterSpacing: "1px", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 3 }}>Total Week</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>₹{totalWeekProfit.toLocaleString("en-IN")}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 9, letterSpacing: "1px", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 3 }}>Daily Avg</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>₹{Math.round(avgProfit).toLocaleString("en-IN")}</div>
+                  </div>
+                </div>
+              </div>
 
-            <Button
-              startIcon={<LogoutIcon sx={{ fontSize: "16px !important" }} />}
-              onClick={handleLogout}
-              variant="outlined"
-              sx={{
-                textTransform: "none", fontWeight: 600,
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: "0.84rem",
-                borderRadius: "10px", px: "16px", height: 38,
-                borderColor: "#FCA5A5", color: "#EF4444",
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  background: "#FEF2F2", borderColor: "#EF4444",
-                  transform: "translateY(-1px)",
-                  boxShadow: "0 4px 12px rgba(239,68,68,0.18)",
-                },
-                "&:active": { transform: "scale(0.97)" },
-              }}>
-              Logout
-            </Button>
-          </Box>
-        </Box>
+              <ProfitChart invoices={invoices} />
+            </div>
 
-        {/* ── PAGE BODY ── */}
-        <Box sx={{ p: "28px 32px", flex: 1 }}>
+            {/* Inventory card */}
+            <div className="inv-card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>Inventory Alerts</span>
+                <Icon d={ICONS.alert} size={17} color="#f59e0b" />
+              </div>
 
-          {/* ── STAT CARDS ── */}
-          <Box sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(3, 1fr)", xl: "repeat(5, 1fr)" },
-            gap: "16px", mb: "24px",
-          }}>
-            {[
-              {
-                icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 18 }} />,
-                label: "Total Invoices",
-                value: invoices.length,
-                accent: "#2563EB",
-                numeric: invoices.length,
-                prefix: "",
-              },
-              {
-                icon: <TrendingUpIcon sx={{ fontSize: 18 }} />,
-                label: "Today's Profit",
-                value: `₹${todayProfit.toLocaleString("en-IN")}`,
-                accent: "#0EA5E9",
-                numeric: todayProfit,
-                prefix: "₹",
-              },
-              {
-                icon: <CurrencyRupeeIcon sx={{ fontSize: 18 }} />,
-                label: "Total Revenue",
-                value: `₹${totalRevenue.toLocaleString("en-IN")}`,
-                accent: "#10B981",
-                numeric: totalRevenue,
-                prefix: "₹",
-              },
-              {
-                icon: <TodayOutlinedIcon sx={{ fontSize: 18 }} />,
-                label: "Today's Bills",
-                value: todayInvoices.length,
-                accent: "#F59E0B",
-                sub: `₹${todayRevenue.toLocaleString("en-IN")}`,
-                numeric: todayInvoices.length,
-                prefix: "",
-              },
-              {
-                icon: <Inventory2OutlinedIcon sx={{ fontSize: 18 }} />,
-                label: "Total Products",
-                value: products.length,
-                accent: "#8B5CF6",
-                sub: `${lowStockProducts.length} low stock`,
-                numeric: products.length,
-                prefix: "",
-              },
-            ].map((card, i) => (
-              <BorderGlow
-                key={card.label}
-                color={card.accent}
-                glowSize={120}
-                duration={6}
-              >
-                <StatCard
-                  {...card}
-                  index={i}
-                  value={
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "2px",
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: "1.7rem",
-                          fontWeight: 800,
-                          color: "inherit",
-                          lineHeight: 1,
-                        }}
-                      >
-                        {card.prefix}
-                      </Typography>
-
-                      <Typography
-                        sx={{
-                          fontSize: "1.7rem",
-                          fontWeight: 800,
-                          color: "inherit",
-                          lineHeight: 1,
-                        }}
-                      >
-                        <CountUp
-                          from={0}
-                          to={card.numeric}
-                          separator=","
-                          duration={2}
-                        />
-                      </Typography>
-                    </Box>
-                  }
-                />
-              </BorderGlow>
-            ))}
-          </Box>
-
-          {/* ── TWO-COLUMN: Chart + Low Stock ── */}
-          <Box sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "1fr 300px" },
-            gap: "16px", mb: "24px",
-          }}>
-            {/* Chart */}
-            <Paper elevation={0} sx={{
-              borderRadius: "20px",
-              border: "2px solid transparent",
-              background: "linear-gradient(#FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, #FCD34D 0%, #FBBF24 50%, #F59E0B 100%) border-box",
-              overflow: "hidden",
-              position: "relative",
-              animation: "fadeSlideUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.3s both",
-              transition: "all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-              "&:hover": {
-                transform: "translateY(-6px)",
-                boxShadow: "0 20px 48px rgba(251,191,36,0.20), 0 8px 16px rgba(245,158,11,0.12)",
-                border: "2px solid transparent",
-                background: "linear-gradient(#FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #FBBF24 100%) border-box",
-              },
-            }}>
-  <Box sx={{
-    px: "22px", py: "16px",
-    borderBottom: `1px solid ${theme.palette.divider}`,
-    display: "flex", justifyContent: "space-between", alignItems: "center",
-  }}>
-    <Box>
-      <Typography sx={{ fontWeight: 700, fontSize: "0.925rem", color: theme.palette.text.primary, fontFamily: "'Sora', sans-serif" }}>
-        Daily Profit
-      </Typography>
-      <Typography sx={{ fontSize: "0.75rem", color: theme.palette.text.secondary, mt: "2px" }}>
-        Last 7 days performance
-      </Typography>
-    </Box>
-    <Box sx={{
-      px: 1.5, py: 0.5,
-      borderRadius: "8px",
-      background: "rgba(16,185,129,0.1)",
-      border: "1px solid rgba(16,185,129,0.2)",
-      color: "#10B981",
-      fontSize: "0.72rem", fontWeight: 700,
-      display: "flex", alignItems: "center", gap: 0.7,
-    }}>
-      <Box sx={{
-        width: 7, height: 7, borderRadius: "50%", background: "#10B981",
-        position: "relative",
-        "&::after": {
-          content: '""', position: "absolute", inset: "-3px",
-          borderRadius: "50%", background: "rgba(16,185,129,0.35)",
-          animation: "pulseRing 1.6s ease-out infinite",
-        },
-      }} />
-      Live
-    </Box>
-  </Box>
-
-  {/* Stat pills row */}
-  <Box sx={{ display: "flex", borderBottom: `1px solid ${theme.palette.divider}` }}>
-    {[
-      { label: "Total week", value: `₹${totalWeekProfit.toLocaleString("en-IN")}`, change: "+12%", up: true },
-      { label: "Daily avg", value: `₹${avgProfit.toLocaleString("en-IN")}`, change: "+5%", up: true },
-      { label: "Today", value: `₹${todayProfit.toLocaleString("en-IN")}`, change: `${changeVsYest}%`, up: changeVsYest >= 0 },
-    ].map((s, i) => (
-      <Box key={i} sx={{
-        flex: 1, px: "16px", py: "12px",
-        borderRight: i < 2 ? `1px solid ${theme.palette.divider}` : "none",
-      }}>
-        <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: theme.palette.text.disabled, textTransform: "uppercase", letterSpacing: "0.06em", mb: "2px" }}>
-          {s.label}
-        </Typography>
-        <Typography sx={{ fontSize: "1rem", fontWeight: 800, fontFamily: "'Sora', sans-serif", color: theme.palette.text.primary }}>
-          {s.value}
-        </Typography>
-        <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: s.up ? "#10B981" : "#EF4444", mt: "1px" }}>
-          {s.up ? "▲" : "▼"} {s.change} vs prev
-        </Typography>
-      </Box>
-    ))}
-  </Box>
-
-  <Box sx={{ p: "16px" }}>
-    <DailyProfitChart invoices={invoices} />
-  </Box>
-</Paper>
-
-            {/* Low Stock Panel */}
-            <Paper elevation={0} sx={{
-              borderRadius: "16px",
-              border: "1px solid #E8ECF0",
-              background: "#FFFFFF",
-              overflow: "hidden",
-              display: "flex", flexDirection: "column",
-              animation: "fadeSlideUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.38s both",
-              transition: "box-shadow 0.25s ease",
-              "&:hover": { boxShadow: "0 8px 28px rgba(15,23,42,0.08)" },
-            }}>
-              <Box sx={{
-                px: "20px", py: "16px", borderBottom: "1px solid #F1F5F9",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-              }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.925rem", color: "#0F172A", fontFamily: "'Sora', sans-serif" }}>
-                  Low Stock Alert
-                </Typography>
-                {lowStockProducts.length > 0 && (
-                  <Box sx={{
-                    width: 20, height: 20, borderRadius: "50%",
-                    background: "#FEF2F2", color: "#EF4444",
-                    fontSize: "0.65rem", fontWeight: 700,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    animation: "scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1) 0.5s both",
-                  }}>
-                    {lowStockProducts.length}
-                  </Box>
-                )}
-              </Box>
-              <Box sx={{
-                flex: 1, overflowY: "auto", px: "16px", py: "12px",
-                display: "flex", flexDirection: "column", gap: "8px",
-                "&::-webkit-scrollbar": { width: "3px" },
-                "&::-webkit-scrollbar-thumb": { background: "#E2E8F0", borderRadius: "2px" },
-              }}>
-                {lowStockProducts.length === 0 ? (
-                  <Box sx={{
-                    flex: 1, display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", py: 4, gap: 1,
-                    animation: "scaleIn 0.35s ease both",
-                  }}>
-                    <Box sx={{ fontSize: "1.8rem" }}>✅</Box>
-                    <Typography sx={{ fontSize: "0.8rem", color: "#94A3B8", textAlign: "center" }}>
-                      All products are well-stocked
-                    </Typography>
-                  </Box>
-                ) : (
-                  lowStockProducts.slice(0, 8).map((p, i) => (
-                    <Box key={i} onClick={() => navigate("/products")} sx={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      px: "12px", py: "10px", borderRadius: "10px",
-                      background: "#FAFBFC", border: "1px solid #F1F5F9",
-                      cursor: "pointer",
-                      animation: "fadeSlideUp 0.3s ease both",
-                      animationDelay: `${0.4 + i * 0.05}s`,
-                      transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-                      "&:hover": {
-                        background: "#FEF2F2", borderColor: "#FECACA",
-                        transform: "translateX(3px) scale(1.01)",
-                        boxShadow: "0 2px 10px rgba(239,68,68,0.12)",
-                      },
-                    }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-                        <Box sx={{
-                          width: 30, height: 30, borderRadius: "8px",
-                          background: "#FEF2F2", color: "#EF4444",
-                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                          transition: "transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-                          ".MuiBox-root:hover &": { transform: "scale(1.15) rotate(-6deg)" },
-                        }}>
-                          <Inventory2OutlinedIcon sx={{ fontSize: 14 }} />
-                        </Box>
-                        <Typography sx={{ fontSize: "0.825rem", fontWeight: 600, color: "#1E293B" }}>
-                          {p.item}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={`${p.Stock} left`}
-                        size="small"
-                        sx={{
-                          fontSize: "0.68rem", fontWeight: 700,
-                          background: Number(p.Stock) === 0 ? "#FEE2E2" : "#FEF3C7",
-                          color: Number(p.Stock) === 0 ? "#DC2626" : "#D97706",
-                          height: 20, border: "none",
-                          transition: "transform 0.2s ease",
-                          "&:hover": { transform: "scale(1.06)" },
-                        }}
-                      />
-                    </Box>
-                  ))
-                )}
-              </Box>
-            </Paper>
-          </Box>
-
-          {/* ── RECENT INVOICES ── */}
-          <Paper elevation={0} sx={{
-            borderRadius: "16px",
-            border: "1px solid #E8ECF0",
-            background: "#FFFFFF",
-            overflow: "hidden",
-            animation: "fadeSlideUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.45s both",
-            transition: "box-shadow 0.25s ease",
-            "&:hover": { boxShadow: "0 8px 28px rgba(15,23,42,0.07)" },
-          }}>
-            <Box sx={{
-              px: "24px", py: "16px", borderBottom: "1px solid #F1F5F9",
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-            }}>
-              <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.925rem", color: "#0F172A", fontFamily: "'Sora', sans-serif" }}>
-                  Recent Invoices
-                </Typography>
-                <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", mt: "2px" }}>Latest {recentInvoices.length} transactions</Typography>
-              </Box>
-              <Button
-                onClick={() => navigate("/invoices")}
-                size="small"
-                sx={{
-                  textTransform: "none", fontWeight: 600, fontSize: "0.78rem",
-                  color: "#2563EB", background: "#EFF6FF",
-                  borderRadius: "8px", px: 1.5,
-                  transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-                  "&:hover": {
-                    background: "#DBEAFE",
-                    transform: "translateX(3px)",
-                    boxShadow: "0 2px 8px rgba(37,99,235,0.18)",
-                  },
-                }}>
-                View all →
-              </Button>
-            </Box>
-
-            {/* Table Header */}
-            <Box sx={{
-              display: "grid",
-              gridTemplateColumns: "140px 1.5fr 1fr 0.8fr 1fr 0.8fr 1fr",
-              gap: "16px",
-              px: "20px",
-              py: "14px",
-              background: "#F8FAFC",
-              borderBottom: "1px solid #F1F5F9",
-            }}>
-              {["INVOICE", "CUSTOMER", "PHONE", "ITEMS", "TOTAL", "MODE", "PROFIT"].map(h => (
-                <Typography key={h} sx={{
-                  fontWeight: 600, fontSize: "0.68rem", color: "#94A3B8",
-                  letterSpacing: "0.08em", textTransform: "uppercase",
-                }}>
-                  {h}
-                </Typography>
+              {inventory.map(item => (
+                <InvRow key={item.name} {...item} />
               ))}
-            </Box>
 
-            {recentInvoices.length === 0 ? (
-              <Box sx={{ py: "48px" }}>
-                <Box sx={{
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
-                  animation: "scaleIn 0.35s ease both",
-                }}>
-                  <Typography sx={{ fontSize: "1.5rem" }}>🧾</Typography>
-                  <Typography sx={{ color: "#94A3B8", fontSize: "0.875rem", fontWeight: 500 }}>No invoices yet</Typography>
-                  <Button
-                    onClick={() => navigate("/createbill")} size="small"
-                    sx={{
-                      textTransform: "none", color: "#2563EB", fontWeight: 600, fontSize: "0.8rem", mt: 0.5,
-                      transition: "all 0.2s ease",
-                      "&:hover": { transform: "translateX(3px)" },
-                    }}>
-                    Create your first invoice →
-                  </Button>
-                </Box>
-              </Box>
+              <div style={{ marginTop: 14, textAlign: "center" }}>
+                <span className="manage-link" onClick={() => navigate("/products")} style={{ cursor: "pointer" }}>Manage Inventory</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Recent Transactions Table */}
+          <div className="rt-wrap">
+            {/* Header */}
+            <div className="rt-header">
+              <span className="rt-title">Recent Transactions</span>
+              <div className="rt-header-right">
+                <div className="rt-filter-icon">
+                  <span />
+                  <span />
+                </div>
+                <span className="rt-view-all" onClick={() => navigate("/invoices")}>View All</span>
+              </div>
+            </div>
+
+            {/* Column labels */}
+            <div className="rt-col-headers">
+              <span className="rt-col-label">Invoice</span>
+              <span className="rt-col-label">Customer</span>
+              <span className="rt-col-label">Status</span>
+              <span className="rt-col-label">Items</span>
+              <span className="rt-col-label">Total</span>
+              <span className="rt-col-label">Mode</span>
+              <span className="rt-col-label right">Profit</span>
+            </div>
+
+            {/* Rows */}
+            {invoices.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+                <div style={{ fontSize: 14 }}>No transactions yet</div>
+                <div style={{ fontSize: 12, marginTop: 8 }}>
+                  <span style={{ color: "#7c5cfc", cursor: "pointer" }} onClick={() => navigate("/createbill")}>
+                    Create your first invoice
+                  </span>
+                </div>
+              </div>
             ) : (
-              <Box sx={{ p: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                {recentInvoices.map((inv, i) => (
-                  <Box
-                    key={i}
+              [...invoices].reverse().slice(0, 5).map((inv, idx) => {
+                // Generate avatar gradient colors
+                const gradients = [
+                  "linear-gradient(135deg,#7c5cfc,#4f3bc0)",
+                  "linear-gradient(135deg,#f472b6,#9333ea)",
+                  "linear-gradient(135deg,#6366f1,#2563eb)",
+                  "linear-gradient(135deg,#f59e0b,#b45309)",
+                  "linear-gradient(135deg,#10b981,#059669)",
+                ];
+                const avatarBg = gradients[idx % gradients.length];
+                
+                // Get initials from customer name
+                const initials = inv.customerName
+                  ? inv.customerName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
+                  : "??";
+                
+                // Determine status (you can add a status field to your invoice schema if needed)
+                const status = inv.paymentStatus || "paid"; // Default to paid if no status field
+                
+                return (
+                  <div 
+                    className="rt-row" 
+                    key={inv._id || idx}
                     onClick={() => navigate(`/invoice/${inv._id}`)}
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "140px 1.5fr 1fr 0.8fr 1fr 0.8fr 1fr",
-                      gap: "16px",
-                      alignItems: "center",
-                      px: "16px",
-                      py: "16px",
-                      background: "#FAFBFC",
-                      borderRadius: "12px",
-                      border: "1px solid #F1F5F9",
-                      cursor: "pointer",
-                      transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-                      animation: `fadeSlideUp 0.3s ease ${i * 0.05}s both`,
-                      "&:hover": {
-                        background: "#F8FAFF",
-                        borderColor: "#DBEAFE",
-                        transform: "translateX(4px)",
-                        boxShadow: "0 4px 12px rgba(37,99,235,0.08)",
-                      },
-                    }}
                   >
-                    {/* Invoice Number */}
-                    <Box sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      background: "#EFF6FF",
-                      borderRadius: "10px",
-                      px: "12px",
-                      py: "10px",
-                    }}>
-                      <ReceiptLongOutlinedIcon sx={{ fontSize: 16, color: "#2563EB" }} />
-                      <Box>
-                        <Typography sx={{ fontSize: "0.65rem", color: "#64748B", fontWeight: 600 }}>
-                          INV-
-                        </Typography>
-                        <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#2563EB", lineHeight: 1 }}>
-                          {inv.invoiceNumber}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Customer */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <Avatar sx={{
-                        width: 38, height: 38, fontSize: "0.8rem", fontWeight: 700,
-                        background: `linear-gradient(135deg, ${['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6'][i % 5]}, ${['#DC2626', '#D97706', '#059669', '#2563EB', '#7C3AED'][i % 5]})`,
-                        color: "#fff",
-                        border: "2px solid #fff",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                      }}>
-                        {inv.customerName?.[0]?.toUpperCase() ?? "?"}
-                      </Avatar>
-                      <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#1E293B" }}>
-                        {inv.customerName}
-                      </Typography>
-                    </Box>
-
-                    {/* Phone */}
-                    <Typography sx={{ fontSize: "0.8rem", color: "#64748B", fontWeight: 500 }}>
-                      {inv.phone || "+91 XXXXX XXXXX"}
-                    </Typography>
-
-                    {/* Items */}
-                    <Box sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      background: "#F1F5F9",
-                      borderRadius: "8px",
-                      px: "10px",
-                      py: "6px",
-                      width: "fit-content",
-                    }}>
-                      <Inventory2OutlinedIcon sx={{ fontSize: 14, color: "#64748B" }} />
-                      <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#475569" }}>
-                        {inv.items?.length ?? 0}
-                      </Typography>
-                      <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>
-                        items
-                      </Typography>
-                    </Box>
-
-                    {/* Total */}
-                    <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A" }}>
-                      ₹{Number(inv.total || 0).toLocaleString("en-IN")}
-                    </Typography>
-
-                    {/* Payment Mode */}
-                    <Chip
-                      icon={
-                        inv.paymode === "Cash" ? <CurrencyRupeeIcon sx={{ fontSize: 14 }} /> :
-                        inv.paymode === "UPI" ? <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>₹</Box> :
-                        inv.paymode === "Card" ? <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>💳</Box> :
-                        <Box component="span" sx={{ fontSize: "0.7rem", fontWeight: 700 }}>🏦</Box>
-                      }
-                      label={inv.paymode || "Cash"}
-                      size="small"
-                      sx={{
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        height: 28,
-                        borderRadius: "8px",
-                        background: 
-                          inv.paymode === "Cash" ? "#D1FAE5" :
-                          inv.paymode === "UPI" ? "#E0E7FF" :
-                          inv.paymode === "Card" ? "#DBEAFE" :
-                          "#FEF3C7",
-                        color:
-                          inv.paymode === "Cash" ? "#065F46" :
-                          inv.paymode === "UPI" ? "#4338CA" :
-                          inv.paymode === "Card" ? "#1E40AF" :
-                          "#92400E",
-                        border: "none",
-                        "& .MuiChip-icon": {
-                          color: "inherit",
-                        },
-                      }}
-                    />
-
-                    {/* Profit */}
-                    <Box sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      color: Number(inv.profit || 0) >= 0 ? "#10B981" : "#EF4444",
-                    }}>
-                      <TrendingUpIcon sx={{ fontSize: 14 }} />
-                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700 }}>
-                        ₹{Number(inv.profit || 0).toLocaleString("en-IN")}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
+                    <span className="rt-invoice">#{inv.invoiceNumber}</span>
+                    <div className="rt-customer">
+                      <div className="rt-avatar" style={{ background: avatarBg }}>
+                        {initials}
+                      </div>
+                      <span className="rt-customer-name">{inv.customerName || "Unknown"}</span>
+                    </div>
+                    <div>
+                      <span className={`rt-badge ${status.toLowerCase()}`}>
+                        {status.toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="rt-items">{inv.items?.length || 0}</span>
+                    <span className="rt-total">₹{Number(inv.total || 0).toLocaleString("en-IN")}</span>
+                    <span className="rt-mode">{inv.paymode || "CASH"}</span>
+                    <span className="rt-profit">+₹{Number(inv.profit || 0).toLocaleString("en-IN")}</span>
+                  </div>
+                );
+              })
             )}
-          </Paper>
-        </Box>
-      </Box>
-    </Box>
+          </div>
+        </div>
+      </main>
+    </div>
   );
-};
-
-export default Dashboard;
+}

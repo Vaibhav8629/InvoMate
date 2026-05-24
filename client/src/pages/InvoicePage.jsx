@@ -4,14 +4,12 @@ import {
   Table, TableHead, TableRow, TableCell, TableBody,
   Card, CardContent, Chip, InputAdornment, Stack, Paper,
   Dialog, DialogContent, DialogTitle, IconButton,
-  FormControl, Select, MenuItem, Avatar, Tooltip,
+  FormControl, Select, MenuItem, Avatar,
   useTheme,
 } from "@mui/material";
 
 import { Snackbar, Alert } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import InventoryIcon from "@mui/icons-material/Inventory2Outlined";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
@@ -21,9 +19,7 @@ import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
-import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
-import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
-import LogoutIcon from "@mui/icons-material/Logout";
+import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
@@ -32,23 +28,6 @@ import html2canvas from "html2canvas";
 import Scanner from "../components/Scanner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
-
-// ─── Sidebar Nav Item ──────────────────────────────────────────────────────────
-const NavItem = ({ icon, label, onClick, active = false }) => (
-  <Tooltip title={label} placement="right" arrow>
-    <Box onClick={onClick} sx={{
-      width: 42, height: 42, borderRadius: "11px",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      cursor: "pointer",
-      color: active ? "#2563EB" : "#94A3B8",
-      background: active ? "#EFF6FF" : "transparent",
-      transition: "all 0.18s ease",
-      "&:hover": { background: "#F1F5F9", color: "#2563EB" },
-    }}>
-      {icon}
-    </Box>
-  </Tooltip>
-);
 
 const InvoicePage = () => {
   const navigate = useNavigate();
@@ -257,35 +236,11 @@ const InvoicePage = () => {
   useEffect(() => { handleItemsSearch(); }, [searchItem]);
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", overflow: "hidden", background: "#F6F8FB", fontFamily: "'DM Sans', sans-serif" }}>
-
-      {/* ── SIDEBAR ─────────────────────────────────────────────────────────── */}
-      <Box sx={{
-        width: 68, flexShrink: 0, background: "#FFFFFF",
-        borderRight: "1px solid #E8ECF0",
-        display: "flex", flexDirection: "column", alignItems: "center",
-        py: "20px", gap: "4px", position: "sticky", top: 0, height: "100vh",
-      }}>
-        <Box onClick={() => navigate("/home")} sx={{
-          width: 38, height: 38, borderRadius: "10px",
-          background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          mb: "20px", cursor: "pointer",
-          boxShadow: "0 4px 14px rgba(37,99,235,0.35)",
-          "&:hover": { transform: "scale(1.06)" }, transition: "all 0.2s ease",
-        }}>
-          <GridViewRoundedIcon sx={{ color: "#fff", fontSize: 18 }} />
-        </Box>
-        <NavItem icon={<AddCircleOutlineIcon fontSize="small" />} label="New Invoice" onClick={() => navigate("/createbill")} active />
-        <NavItem icon={<ReceiptLongOutlinedIcon fontSize="small" />} label="Invoices" onClick={() => navigate("/invoices")} />
-        <NavItem icon={<InventoryIcon fontSize="small" />} label="Products" onClick={() => navigate("/products")} />
-        <NavItem icon={<StorefrontOutlinedIcon fontSize="small" />} label="Profile" onClick={() => navigate("/profile")} />
-        <Box sx={{ mt: "auto", pt: 2, borderTop: "1px solid #F1F5F9", width: "40px" }} />
-        <NavItem icon={<LogoutIcon fontSize="small" />} label="Logout" onClick={handleLogout} />
-      </Box>
+    <Box sx={{ height: "100vh", overflow: "hidden", background: "#F6F8FB", fontFamily: "'DM Sans', sans-serif", pl: `${SIDEBAR_WIDTH}px` }}>
+      <Sidebar onLogout={handleLogout} />
 
       {/* ── MAIN AREA ────────────────────────────────────────────────────────── */}
-      <Box sx={{ flex: 1, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
         {/* ── TOP NAV ── */}
         <Box sx={{
