@@ -1,22 +1,32 @@
-🚀 InvoMate
+ 💳 **INVOMATE** – Smart Billing Platform
 
 Modern Invoice & Business Management Platform built with the MERN Stack.
 
 InvoMate helps businesses manage invoices, customers, billing workflows, and reports with a clean, modern, and efficient interface.
 
 ✨ Features:
+
 🧾 Invoice Creation & Management
+
 📊 Dashboard Analytics
+
 💳 Subscription-Based Access
+
 📁 Report Generation
+
 🔐 JWT Authentication & Authorization
+
 ☁️ Cloudinary Signatures Uploads
+
 📱 Fully Responsive UI
 
 
 🛠️ Tech Stack:
+
 🎨 Frontend - React, Tailwind CSS
+
 ⚙️ Backend  - Node.js, Express.js, JWT Authentication
+
 💾 Databse  - MongoDB, Cloudinary 
 
 
@@ -73,7 +83,11 @@ CLOUDINARY_CLOUD_NAME=
 
 
 🌟 Future Improvements:
+
 📄 CSV Export Support
+
 🧾 GST Report Generation
+
 📊 Advanced Analytics
+
 📧 Email Invoice Delivery

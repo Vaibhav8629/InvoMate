@@ -27,6 +27,7 @@ export default function InvoiceView() {
 
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [signatureUrl, setSignatureUrl] = useState("");
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -38,7 +39,25 @@ export default function InvoiceView() {
       setInvoice(data.data);
       setLoading(false);
     };
+
+    const fetchSignature = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/signature`, {
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setSignatureUrl(data?.signature?.url || "");
+      } catch (err) {
+        console.error("Error loading signature:", err);
+      }
+    };
+
     fetchInvoice();
+    fetchSignature();
   }, [id]);
 
   const handleDownloadPDF = async () => {
@@ -416,7 +435,18 @@ export default function InvoiceView() {
               <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.1em", mb: "10px" }}>
                 Authorized Signature
               </Typography>
-              <Box sx={{ width: 130, borderBottom: "1.5px solid #CBD5E1" }} />
+              {signatureUrl ? (
+                <Box
+                  component="img"
+                  src={signatureUrl}
+                  alt="Authorized Signature"
+                  crossOrigin="anonymous"
+                  sx={{ width: 150, height: 72, objectFit: "contain", display: "block" }}
+                />
+              ) : (
+                <Box sx={{ width: 150, height: 72 }} />
+              )}
+              <Box sx={{ width: 150, borderBottom: "1.5px solid #CBD5E1", mt: "4px" }} />
             </Box>
             <Box sx={{ textAlign: "right" }}>
               <Typography sx={{

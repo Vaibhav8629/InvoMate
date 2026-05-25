@@ -57,6 +57,9 @@ export default function ShopProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [signatureUrl, setSignatureUrl] = useState("");
+  const [signatureLoading, setSignatureLoading] = useState(false);
+  const [signatureMessage, setSignatureMessage] = useState("");
   const [formData, setFormData] = useState({
     ShopName: "",
     GSTNumber: "",
@@ -97,6 +100,7 @@ export default function ShopProfile() {
         
         setProfileData(profile);
         setUserData(user);
+        setSignatureUrl(user?.signature?.url || "");
         
         // Initialize form data with profile data or empty values
         if (profile) {
@@ -150,6 +154,18 @@ export default function ShopProfile() {
     navigate("/login");
   };
 
+  const refreshSignature = async () => {
+    try {
+      const response = await apiGet(`${import.meta.env.VITE_API_URL}/api/signature`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      setSignatureUrl(data?.signature?.url || "");
+    } catch (err) {
+      console.error("Error refreshing signature:", err);
+    }
+  };
+
   const handleCancelEdit = () => {
     setIsEditing(false);
     // Reset form data to original profile data
@@ -196,6 +212,68 @@ export default function ShopProfile() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleSignatureUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    setSignatureLoading(true);
+    setSignatureMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("signature", file);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/signature/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Unable to save signature");
+      }
+
+      setSignatureUrl(data?.signature?.url || "");
+      setSignatureMessage("Signature saved to cloudinary.");
+      setUserData(prev => prev ? { ...prev, signature: data.signature } : prev);
+      await refreshSignature();
+    } catch (err) {
+      setSignatureMessage(err.message || "Unable to save signature.");
+    } finally {
+      setSignatureLoading(false);
+    }
+  };
+
+  const handleSignatureRemove = async () => {
+    setSignatureLoading(true);
+    setSignatureMessage("");
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/signature`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Unable to remove signature");
+      }
+
+      setSignatureUrl("");
+      setSignatureMessage("Signature removed.");
+      setUserData(prev => prev ? { ...prev, signature: { url: null, public_id: null } } : prev);
+      await refreshSignature();
+    } catch (err) {
+      setSignatureMessage(err.message || "Unable to remove signature.");
+    } finally {
+      setSignatureLoading(false);
+    }
   };
 
   const getInitials = (name) => {
@@ -425,6 +503,63 @@ export default function ShopProfile() {
                         </p>
                       )}
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Authorised Signature ── */}
+              <div className="border rounded-xl p-6" style={surfaceCardStyle}>
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <SectionHeader icon="✎" title="Authorised Signature" />
+                    <p className="text-[11px] text-gray-500 -mt-1">Uploads here are used on invoices and PDF exports.</p>
+                  </div>
+                  <span className="text-[9px] font-mono uppercase tracking-[0.2em] rounded-full px-3 py-1 border" style={surfaceMutedStyle}>
+                    {signatureUrl ? "Synced" : "Not uploaded"}
+                  </span>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                  <div className="rounded-xl border p-4 flex flex-col gap-3" style={surfaceMutedStyle}>
+                    <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Current signature</p>
+                    <div className="min-h-[132px] rounded-lg border border-dashed border-white/10 bg-black/20 flex items-center justify-center overflow-hidden">
+                      {signatureUrl ? (
+                        <img
+                          src={signatureUrl}
+                          alt="Uploaded signature"
+                          className="max-h-[120px] max-w-full object-contain"
+                        />
+                      ) : (
+                        <div className="text-center px-4 py-6">
+                          <p className="text-sm text-gray-300 font-medium">No signature uploaded yet</p>
+                          <p className="text-xs text-gray-500 mt-1">Upload an image to show it on invoices.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border p-4 flex flex-col gap-3" style={surfaceMutedStyle}>
+                    <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Upload / replace</p>
+                    <label className="cursor-pointer rounded-lg border border-violet-500/30 bg-violet-600/10 px-4 py-3 text-sm font-semibold text-violet-200 hover:bg-violet-600/20 transition-colors">
+                      {signatureLoading ? "Uploading..." : "Choose image"}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleSignatureUpload} disabled={signatureLoading} />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleSignatureRemove}
+                      disabled={!signatureUrl || signatureLoading}
+                      className="rounded-lg border border-gray-500/50 bg-gray-600/10 px-4 py-3 text-sm font-semibold text-gray-200 hover:bg-gray-600/25 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Remove signature
+                    </button>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, or WebP works best for invoice rendering.
+                    </p>
+                    {signatureMessage && (
+                      <p className={`text-xs font-medium ${signatureMessage.toLowerCase().includes("error") ? "text-rose-400" : "text-emerald-400"}`}>
+                        {signatureMessage}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

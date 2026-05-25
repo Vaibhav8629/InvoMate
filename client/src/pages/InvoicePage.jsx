@@ -148,21 +148,31 @@ const InvoicePage = () => {
   };
 
   const fetchProfileData = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
-      credentials: 'include', // Enable cookies
-      headers: { "Content-Type": "application/json" },
-    });
-    const d = await res.json();
-    setName(d.ShopName); setGST(d.GSTNumber); setAddress(d.Address);
+    const [profileRes, userRes, sigRes] = await Promise.all([
+      fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
+        credentials: 'include', // Enable cookies
+        headers: { "Content-Type": "application/json" },
+      }),
+      fetch(`${import.meta.env.VITE_API_URL}/api/auth/user`, {
+        credentials: 'include', // Enable cookies
+        headers: { "Content-Type": "application/json" },
+      }),
+      fetch(`${import.meta.env.VITE_API_URL}/api/signature`, {
+        credentials: 'include', // Enable cookies
+        headers: { "Content-Type": "application/json" },
+      }),
+    ]);
 
-    const sigRes = await fetch(`${import.meta.env.VITE_API_URL}/api/signature`, {
-      credentials: 'include', // Enable cookies
-      headers: { "Content-Type": "application/json" },
-    });
+    const profileData = await profileRes.json();
+    const userData = await userRes.json();
     const sigData = await sigRes.json();
-    if (sigData?.signature?.url) {
-      setSignatureUrl(sigData.signature.url);
-    }
+
+    setName(profileData?.ShopName || "");
+    setGST(profileData?.GSTNumber || "");
+    setAddress(profileData?.Address || "");
+
+    const resolvedSignature = sigData?.signature?.url || userData?.signature?.url || "";
+    setSignatureUrl(resolvedSignature);
   };
 
   const fetchProductData = async () => {
@@ -554,22 +564,39 @@ const InvoicePage = () => {
 
                 {/* ── Authorised Signature bottom left ── */}
                 <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "6px" }}>
-                  {signatureUrl ? (
-                    <Box
-                      component="img"
-                      src={signatureUrl}
-                      alt="Authorised Signature"
-                      crossOrigin="anonymous"
-                      sx={{
-                        width: 180, height: 130,
-                        objectFit: "contain",
-                        borderBottom: "1.5px solid #CBD5E1",
-                        pb: "4px", display: "block",
-                      }}
-                    />
-                  ) : (
-                    <Box sx={{ width: 180, height: 70, borderBottom: "1.5px solid #CBD5E1" }} />
-                  )}
+                  <Box sx={{
+                    width: 180,
+                    minHeight: 96,
+                    borderRadius: "10px",
+                    border: "1px solid #E2E8F0",
+                    background: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    px: "8px",
+                    py: "10px",
+                  }}>
+                    {signatureUrl ? (
+                      <Box
+                        component="img"
+                        src={signatureUrl}
+                        alt="Authorised Signature"
+                        crossOrigin="anonymous"
+                        sx={{
+                          width: "100%",
+                          maxWidth: 160,
+                          maxHeight: 72,
+                          objectFit: "contain",
+                          display: "block",
+                        }}
+                      />
+                    ) : (
+                      <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", fontWeight: 600 }}>
+                        No signature uploaded
+                      </Typography>
+                    )}
+                  </Box>
                   <Typography sx={{
                     fontSize: "0.7rem", color: "#94A3B8",
                     fontWeight: 600, letterSpacing: "0.06em",
