@@ -2,32 +2,16 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
+import { useThemeMode } from "../store/theme";
 
 const fmt = (n) => "₹" + n.toLocaleString("en-IN");
 
-const StatusBadge = ({ s }) => {
-  const map = {
-    PAID:    { bg: "rgba(16,185,129,.15)",  color: "#34d399", border: "rgba(16,185,129,.3)" },
-    PENDING: { bg: "rgba(245,158,11,.15)",  color: "#fbbf24", border: "rgba(245,158,11,.3)" },
-    OVERDUE: { bg: "rgba(239,68,68,.15)",   color: "#f87171", border: "rgba(239,68,68,.3)"  },
-  };
-  const c = map[s] || map.PENDING;
-  return (
-    <span
-      style={{
-        background: c.bg,
-        color: c.color,
-        border: `1px solid ${c.border}`,
-        padding: "3px 10px",
-        borderRadius: 20,
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: 0.5,
-      }}
-    >
-      {s}
-    </span>
-  );
+const parseInvoiceDate = (value) => {
+  if (!value) return null;
+  const [day, month, year] = value.split("-");
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
 };
 
 const Avatar = ({ name, color }) => (
@@ -54,8 +38,8 @@ const Avatar = ({ name, color }) => (
 const StatCard = ({ label, value, sub, icon, accent }) => (
   <div
     style={{
-      background: "linear-gradient(135deg,#111827 0%,#0f172a 100%)",
-      border: "1px solid rgba(99,102,241,.18)",
+      background: "linear-gradient(135deg,var(--surface) 0%, var(--surface-2) 100%)",
+      border: "1px solid var(--border-subtle)",
       borderRadius: 14,
       padding: "18px 20px",
       position: "relative",
@@ -74,23 +58,24 @@ const StatCard = ({ label, value, sub, icon, accent }) => (
       }}
     />
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-      <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase" }}>
+      <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase" }}>
         {label}
       </span>
       <span style={{ fontSize: 20, color: accent }}>{icon}</span>
     </div>
-    <div style={{ fontSize: 26, fontWeight: 700, color: "#f1f5f9", marginBottom: 6, fontVariantNumeric: "tabular-nums" }}>
+    <div style={{ fontSize: 26, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6, fontVariantNumeric: "tabular-nums" }}>
       {value}
     </div>
-    <div style={{ fontSize: 12, color: "#6b7280" }}>{sub}</div>
+    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{sub}</div>
   </div>
 );
 
 export default function InvoicesPage() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
-  const [filter, setFilter] = useState("All");
+  const { theme, toggleTheme } = useThemeMode();
   const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [invoices, setInvoices] = useState([]);
   const [shopName, setShopName] = useState("Elite Workspace");
   const [loading, setLoading] = useState(true);
@@ -128,9 +113,9 @@ export default function InvoicesPage() {
   const today = new Date();
   const formattedToday = `${String(today.getDate()).padStart(2, "0")}-${String(today.getMonth() + 1).padStart(2, "0")}-${today.getFullYear()}`;
   
-  // Calculate unpaid amount (you can add a status field to invoices if needed)
-  const unpaidInvoices = invoices.filter(inv => !inv.paid && inv.paymentStatus !== "PAID");
-  const totalUnpaid = unpaidInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+  const todayInvoices = invoices.filter(inv => inv.date === formattedToday);
+  const todayCount = todayInvoices.length;
+  const todayProfit = todayInvoices.reduce((sum, inv) => sum + (Number(inv.profit) || 0), 0);
   
   // Calculate this month's revenue
   const currentMonth = today.getMonth();
@@ -141,16 +126,6 @@ export default function InvoicesPage() {
   });
   const monthRevenue = thisMonthInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
   
-  // Calculate overdue (invoices older than 30 days and not paid)
-  const thirtyDaysAgo = new Date(today);
-  thirtyDaysAgo.setDate(today.getDate() - 30);
-  const overdueInvoices = invoices.filter(inv => {
-    const [day, month, year] = inv.date.split('-');
-    const invDate = new Date(year, month - 1, day);
-    return invDate < thirtyDaysAgo && !inv.paid && inv.paymentStatus !== "PAID";
-  });
-  const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
-
   // Transform backend data to match UI format
   const transformedInvoices = invoices.map((inv, idx) => {
     const colors = ["#6366f1", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6", "#ec4899", "#06b6d4"];
@@ -161,27 +136,12 @@ export default function InvoicesPage() {
       ? inv.customerName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
       : "??";
     
-    // Determine status
-    const [day, month, year] = inv.date.split('-');
-    const invDate = new Date(year, month - 1, day);
-    const daysDiff = Math.floor((today - invDate) / (1000 * 60 * 60 * 24));
-    
-    let status = "PAID";
-    let note = "Verified Payment";
-    
-    if (inv.paymentStatus === "PENDING" || !inv.paid) {
-      if (daysDiff > 30) {
-        status = "OVERDUE";
-        note = `${daysDiff - 30} Days Overdue`;
-      } else {
-        status = "PENDING";
-        note = "Action Required";
-      }
-    }
+    const invDate = parseInvoiceDate(inv.date);
     
     // Format date
-    const dateObj = new Date(year, month - 1, day);
-    const formattedDate = dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    const formattedDate = invDate
+      ? invDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+      : "Invalid date";
     
     return {
       id: `#INV-${inv.invoiceNumber}`,
@@ -190,22 +150,32 @@ export default function InvoicesPage() {
       phone: inv.phone || "+91 XXXXX XXXXX",
       avatar: initials,
       color: color,
-      status: status,
+      note: "Payment recorded",
       amount: Number(inv.total) || 0,
       profit: Number(inv.profit) || 0,
       method: inv.paymode || "CASH",
       date: formattedDate,
-      note: note,
+      rawDate: invDate,
       _id: inv._id,
     };
   });
 
   const filtered = transformedInvoices.filter((inv) => {
-    const matchStatus = filter === "All" || inv.status === filter;
     const matchSearch =
       inv.customer.toLowerCase().includes(search.toLowerCase()) ||
       inv.id.toLowerCase().includes(search.toLowerCase());
-    return matchStatus && matchSearch;
+    let matchDate = true;
+    if (dateRange.start) {
+      const startDate = new Date(dateRange.start);
+      startDate.setHours(0, 0, 0, 0);
+      matchDate = inv.rawDate ? inv.rawDate >= startDate : false;
+    }
+    if (matchDate && dateRange.end) {
+      const endDate = new Date(dateRange.end);
+      endDate.setHours(23, 59, 59, 999);
+      matchDate = inv.rawDate ? inv.rawDate <= endDate : false;
+    }
+    return matchSearch && matchDate;
   });
 
   const handleLogout = () => {
@@ -215,7 +185,7 @@ export default function InvoicesPage() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#080b14", color: "#e2e8f0" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 24, marginBottom: 12 }}>Loading...</div>
           <div style={{ fontSize: 14, color: "#6b7280" }}>Fetching your invoices</div>
@@ -225,92 +195,69 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080b14", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#e2e8f0" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-base)", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "var(--text-primary)", paddingLeft: SIDEBAR_WIDTH }}>
       <Sidebar shopName={shopName} onLogout={handleLogout} />
 
       {/* Main */}
-      <main style={{ marginLeft: SIDEBAR_WIDTH, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
+      <main style={{ marginLeft: 0, display: "flex", flexDirection: "column", overflowX: "hidden", paddingTop: "52px" }}>
         {/* Topbar */}
         <header
           style={{
             padding: "16px 28px",
             borderBottom: "1px solid rgba(99,102,241,.1)",
+            marginLeft: -SIDEBAR_WIDTH,
+            position: "fixed",
+            top: 0,
+            left: SIDEBAR_WIDTH,
+            right: 0,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "rgba(13,16,23,.8)",
+            background: "var(--surface)",
             backdropFilter: "blur(12px)",
-            position: "sticky",
-            top: 0,
             zIndex: 10,
           }}
         >
-          <div style={{ display: "flex", gap: 24 }}>
-            {["Overview", "Reports", "History"].map((t) => (
-              <span
-                key={t}
-                style={{
-                  fontSize: 14,
-                  color: t === "Reports" ? "#818cf8" : "#6b7280",
-                  cursor: "pointer",
-                  fontWeight: t === "Reports" ? 600 : 400,
-                  borderBottom: t === "Reports" ? "2px solid #6366f1" : "2px solid transparent",
-                  paddingBottom: 4,
-                }}
-              >
-                {t}
-              </span>
-            ))}
-          </div>
 
+          <div
+            style={{
+              background: "rgba(99,102,241,.08)",
+              border: "1px solid rgba(99,102,241,.2)",
+              borderRadius: 10,
+              padding: "8px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span style={{ color: "#6b7280", fontSize: 14 }}>🔍</span>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search across platform..."
+              style={{
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#e2e8f0",
+                fontSize: 13,
+                width: 160,
+              }}
+            />
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
               style={{
-                background: "rgba(99,102,241,.08)",
-                border: "1px solid rgba(99,102,241,.2)",
-                borderRadius: 10,
-                padding: "8px 14px",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <span style={{ color: "#6b7280", fontSize: 14 }}>🔍</span>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search across platform..."
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  color: "#e2e8f0",
-                  fontSize: 13,
-                  width: 160,
-                }}
-              />
-            </div>
-            <div
-              style={{
                 width: 36, height: 36, borderRadius: 10,
                 background: "rgba(99,102,241,.1)",
                 border: "1px solid rgba(99,102,241,.2)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 cursor: "pointer", fontSize: 16,
               }}
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
-              🔔
-            </div>
-            <div
-              style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: "rgba(99,102,241,.1)",
-                border: "1px solid rgba(99,102,241,.2)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", fontSize: 16,
-              }}
-            >
-              🌙
+              {theme === "dark" ? "☀️" : "🌙"}
             </div>
             <button
               style={{
@@ -360,23 +307,23 @@ export default function InvoicesPage() {
           {/* Stat Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
             <StatCard 
-              label="Total Unpaid" 
-              value={fmt(totalUnpaid)} 
-              sub={`${unpaidInvoices.length} pending invoices`} 
+              label="Today's Invoices" 
+              value={todayCount.toString()} 
+              sub="Invoices created today" 
               icon="📋" 
               accent="#6366f1" 
+            />
+            <StatCard 
+              label="Today's Profit" 
+              value={fmt(todayProfit)} 
+              sub="Profit from today's invoices" 
+              icon="💰" 
+              accent="#10b981" 
             />
             <StatCard 
               label="Revenue This Month" 
               value={fmt(monthRevenue)} 
               sub={`${thisMonthInvoices.length} invoices this month`} 
-              icon="💰" 
-              accent="#10b981" 
-            />
-            <StatCard 
-              label="Overdue Amount" 
-              value={fmt(overdueAmount)} 
-              sub={`${overdueInvoices.length} overdue items`} 
               icon="⚠️" 
               accent="#f59e0b" 
             />
@@ -391,31 +338,38 @@ export default function InvoicesPage() {
 
           {/* Filters */}
           <div style={{ display: "flex", gap: 12, marginBottom: 20, alignItems: "center" }}>
-            {["All", "PAID", "PENDING", "OVERDUE"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: "#6b7280", fontSize: 13 }}>📅 Date Range</span>
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
                 style={{
-                  background: filter === f ? "rgba(99,102,241,.18)" : "rgba(99,102,241,.05)",
-                  border: `1px solid ${filter === f ? "rgba(99,102,241,.5)" : "rgba(99,102,241,.15)"}`,
+                  background: "rgba(99,102,241,.05)",
+                  border: "1px solid rgba(99,102,241,.15)",
                   borderRadius: 8,
-                  color: filter === f ? "#818cf8" : "#6b7280",
-                  padding: "7px 16px", fontSize: 13,
-                  fontWeight: filter === f ? 600 : 400,
-                  cursor: "pointer",
+                  color: "#e2e8f0",
+                  padding: "6px 10px",
+                  fontSize: 12,
                 }}
-              >
-                {f === "All" ? "Status: All" : f}
-              </button>
-            ))}
-            <div style={{ background: "rgba(99,102,241,.05)", border: "1px solid rgba(99,102,241,.15)", borderRadius: 8, color: "#6b7280", padding: "7px 16px", fontSize: 13 }}>
-              📅 Date Range: Last 30 Days
-            </div>
-            <div style={{ background: "rgba(99,102,241,.05)", border: "1px solid rgba(99,102,241,.15)", borderRadius: 8, color: "#6b7280", padding: "7px 16px", fontSize: 13 }}>
-              👤 Client Name
+              />
+              <span style={{ color: "#4b5563", fontSize: 12 }}>to</span>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
+                style={{
+                  background: "rgba(99,102,241,.05)",
+                  border: "1px solid rgba(99,102,241,.15)",
+                  borderRadius: 8,
+                  color: "#e2e8f0",
+                  padding: "6px 10px",
+                  fontSize: 12,
+                }}
+              />
             </div>
             <button
-              onClick={() => { setFilter("All"); setSearch(""); }}
+              onClick={() => { setSearch(""); setDateRange({ start: "", end: "" }); }}
               style={{ marginLeft: "auto", background: "transparent", border: "1px solid rgba(99,102,241,.2)", borderRadius: 8, color: "#6b7280", padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
             >
               Reset
@@ -423,12 +377,12 @@ export default function InvoicesPage() {
           </div>
 
           {/* Table */}
-          <div style={{ background: "#0d1117", border: "1px solid rgba(99,102,241,.15)", borderRadius: 16, overflow: "hidden" }}>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 16, overflow: "hidden" }}>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 980 }}>
                 <thead>
                   <tr style={{ background: "rgba(99,102,241,.06)", borderBottom: "1px solid rgba(99,102,241,.12)" }}>
-                    {["Invoice ID", "Customer", "Phone", "Status", "Amount", "Profit", "Payment", "Date", "Actions"].map((h) => (
+                    {["Invoice ID", "Customer", "Phone", "Amount", "Profit", "Payment", "Date", "Actions"].map((h) => (
                       <th
                         key={h}
                         style={{
@@ -469,9 +423,6 @@ export default function InvoicesPage() {
                         <span style={{ fontFamily: "monospace", fontSize: 12, color: "#6b7280" }}>{inv.phone}</span>
                       </td>
                       <td style={{ padding: "16px 16px" }}>
-                        <StatusBadge s={inv.status} />
-                      </td>
-                      <td style={{ padding: "16px 16px" }}>
                         <div style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>{fmt(inv.amount)}</div>
                         <div style={{ fontSize: 11, color: "#4b5563", marginTop: 2 }}>{inv.method}</div>
                       </td>
@@ -495,14 +446,7 @@ export default function InvoicesPage() {
                       </td>
                       <td style={{ padding: "16px 16px" }}>
                         <div style={{ fontSize: 13, color: "#9ca3af" }}>{inv.date}</div>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: inv.status === "OVERDUE" ? "#f87171" : inv.status === "PENDING" ? "#fbbf24" : "#34d399",
-                            marginTop: 2,
-                            fontWeight: 500,
-                          }}
-                        >
+                        <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2, fontWeight: 500 }}>
                           {inv.note}
                         </div>
                       </td>

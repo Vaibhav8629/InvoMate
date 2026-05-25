@@ -91,3 +91,26 @@ export const getUnreadCount = async () => {
     throw error;
   }
 };
+
+// Clear all notifications
+export const clearAllNotifications = async () => {
+  try {
+    const response = await fetch(`${API_URL}/clear-all`, {
+      method: "DELETE",
+      credentials: 'include',
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to clear notifications");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error clearing notifications:", error);
+    throw error;
+  }
+};

@@ -182,7 +182,7 @@ const InvoicePage = () => {
 
   const handleAddToBill = (code) => {
     const newItem = products.find((x) => x.item_code === code);
-    if (!newItem) return;
+    if (!newItem || Number(newItem.Stock) <= 0) return;
     setItemsBuy((prev) => [...prev, { ...newItem, qty: 1, discount: 0 }]);
     setTotalAmount((prev) => prev + Number(newItem.price));
     const base = (100 * Number(newItem.price)) / (100 + Number(newItem.GST));
@@ -756,9 +756,15 @@ const InvoicePage = () => {
                   </Box>
 
                   {/* Add to Bill */}
+                  {Number(product.Stock) <= 0 && (
+                    <Typography sx={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700, mb: 0.75 }}>
+                      Out of stock
+                    </Typography>
+                  )}
                   <Button
                     fullWidth
                     startIcon={<ShoppingCartIcon sx={{ fontSize: "14px !important" }} />}
+                    disabled={Number(product.Stock) <= 0}
                     onClick={() => handleAddToBill(product.item_code)}
                     sx={{
                       fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
@@ -770,6 +776,11 @@ const InvoicePage = () => {
                         background: "#2563EB", color: "#fff",
                         borderColor: "#2563EB",
                         boxShadow: "0 4px 12px rgba(37,99,235,0.25)",
+                      },
+                      "&.Mui-disabled": {
+                        background: "#E2E8F0",
+                        color: "#94A3B8",
+                        borderColor: "#CBD5E1",
                       },
                       transition: "all 0.15s ease",
                     }}

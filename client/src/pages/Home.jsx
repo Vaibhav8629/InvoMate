@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
+import { useThemeMode } from "../store/theme";
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
 
 /* ─── Manual CSS injected once ─────────────────────────────────────────── */
@@ -9,7 +10,7 @@ const STYLES = `
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
+  :root[data-theme="dark"] {
     --bg-base:        #0d0d14;
     --bg-sidebar:     #111118;
     --bg-card:        #16161f;
@@ -32,6 +33,31 @@ const STYLES = `
     --chart-stroke:   #9b7eff;
     --chart-fill-top: rgba(124,92,252,0.35);
     --chart-fill-bot: rgba(124,92,252,0.00);
+  }
+
+  :root[data-theme="light"] {
+    --bg-base:        #f8fafc;
+    --bg-sidebar:     #ffffff;
+    --bg-card:        #ffffff;
+    --bg-card-hover:  #f1f5f9;
+    --bg-topbar:      #ffffff;
+    --border:         rgba(15,23,42,0.08);
+    --border-active:  rgba(15,23,42,0.16);
+    --accent:         #4f46e5;
+    --accent-soft:    rgba(79,70,229,0.14);
+    --accent-btn:     #4f46e5;
+    --green:          #10b981;
+    --green-soft:     rgba(16,185,129,0.12);
+    --red:            #ef4444;
+    --red-soft:       rgba(239,68,68,0.12);
+    --cyan:           #06b6d4;
+    --cyan-soft:      rgba(6,182,212,0.12);
+    --text-primary:   #0f172a;
+    --text-secondary: #475569;
+    --text-muted:     #94a3b8;
+    --chart-stroke:   #6366f1;
+    --chart-fill-top: rgba(99,102,241,0.22);
+    --chart-fill-bot: rgba(99,102,241,0.00);
   }
 
   body { background: var(--bg-base); font-family: 'DM Sans', sans-serif; color: var(--text-primary); }
@@ -215,12 +241,12 @@ const STYLES = `
 
   /* Recent Transactions Table */
   .rt-wrap {
-    background: #0f0f14;
-    border: 1px solid rgba(255,255,255,0.05);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 24px 28px 16px;
     font-family: 'DM Sans', sans-serif;
-    color: #f0f0f8;
+    color: var(--text-primary);
     margin-top: 20px;
   }
   .rt-header {
@@ -233,7 +259,7 @@ const STYLES = `
     font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.4px;
-    color: #ffffff;
+    color: var(--text-primary);
   }
   .rt-header-right {
     display: flex;
@@ -254,7 +280,7 @@ const STYLES = `
   .rt-filter-icon span {
     display: block;
     height: 2px;
-    background: #f0f0f8;
+    background: var(--text-primary);
     border-radius: 2px;
   }
   .rt-filter-icon span:nth-child(1) { width: 16px; }
@@ -264,7 +290,7 @@ const STYLES = `
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #8b6bfd;
+    color: var(--accent);
     cursor: pointer;
     transition: opacity .2s;
   }
@@ -273,7 +299,7 @@ const STYLES = `
     display: grid;
     grid-template-columns: 140px 200px 120px 80px 140px 140px 1fr;
     padding: 0 20px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid var(--border);
     margin-bottom: 4px;
   }
   .rt-col-label {
@@ -281,7 +307,7 @@ const STYLES = `
     font-weight: 600;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #4a4a5e;
+    color: var(--text-muted);
   }
   .rt-col-label.right { text-align: right; }
   .rt-row {
@@ -289,18 +315,18 @@ const STYLES = `
     grid-template-columns: 140px 200px 120px 80px 140px 140px 1fr;
     align-items: center;
     padding: 18px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
     transition: background .2s;
     border-radius: 10px;
     cursor: pointer;
   }
   .rt-row:last-child { border-bottom: none; }
-  .rt-row:hover { background: rgba(255,255,255,0.02); }
+  .rt-row:hover { background: var(--bg-card-hover); }
   .rt-invoice {
     font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
     font-weight: 600;
-    color: #e0e0e8;
+    color: var(--text-primary);
     letter-spacing: -0.3px;
   }
   .rt-customer {
@@ -324,44 +350,23 @@ const STYLES = `
   .rt-customer-name {
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
-  }
-  .rt-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 12px;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-  }
-  .rt-badge.paid {
-    background: rgba(0,229,160,0.15);
-    color: #00e5a0;
-    border: 1px solid rgba(0,229,160,0.25);
-  }
-  .rt-badge.pending {
-    background: rgba(251,146,60,0.15);
-    color: #fb923c;
-    border: 1px solid rgba(251,146,60,0.25);
+    color: var(--text-primary);
   }
   .rt-items {
     font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
-    color: #7a7a8e;
+    color: var(--text-muted);
     font-weight: 500;
   }
   .rt-total {
     font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
     font-weight: 600;
-    color: #e0e0e8;
+    color: var(--text-primary);
   }
   .rt-mode {
     font-size: 12px;
-    color: #5a5a6e;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.8px;
     font-weight: 500;
@@ -370,10 +375,12 @@ const STYLES = `
     font-family: 'JetBrains Mono', monospace;
     font-size: 15px;
     font-weight: 700;
-    color: #00e5a0;
+    color: var(--green);
     text-align: right;
   }
 `;
+
+const fmt = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
 
 /* ─── SVG Icons ──────────────────────────────────────────────────────────── */
 const Icon = ({ d, size = 15, color = "currentColor" }) => (
@@ -495,16 +502,46 @@ function StatCard({ label, value, sub, icon, valueClass = "" }) {
   );
 }
 
+const parseInvoiceDate = (value) => {
+  if (!value) return null;
+  const [day, month, year] = value.split("-");
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+};
+
+const InvoiceAvatar = ({ name, color }) => (
+  <div
+    style={{
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      background: `${color}22`,
+      border: `1.5px solid ${color}44`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: 700,
+      fontSize: 12,
+      color,
+      flexShrink: 0,
+    }}
+  >
+    {name}
+  </div>
+);
+
 /* ─── Main Component ─────────────────────────────────────────────────────── */
 export default function Home() {
   const navigate = useNavigate();
-  const { logoutUser } = useAuth();
-  const [activeTab, setActiveTab] = useState("Overview");
+  const { logoutUser, user } = useAuth();
+  const { theme, toggleTheme } = useThemeMode();
   
   // State for backend data
   const [invoices, setInvoices] = useState([]);
   const [products, setProducts] = useState([]);
-  const [shopName, setShopName] = useState("Elite Workspace");
+  const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [loading, setLoading] = useState(true);
 
   // Fetch data from backend
@@ -512,7 +549,7 @@ export default function Home() {
     const fetchData = async () => {
       try {
         // Fetch invoices
-        const invRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getinvoices`, {
+        const invRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/getinvoices?limit=5`, {
           credentials: 'include',
           headers: { "Content-Type": "application/json" },
         });
@@ -527,13 +564,6 @@ export default function Home() {
         const prodData = await prodRes.json();
         setProducts(Array.isArray(prodData) ? prodData : []);
 
-        // Fetch profile
-        const profRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/findprofile`, {
-          credentials: 'include',
-          headers: { "Content-Type": "application/json" },
-        });
-        const profData = await profRes.json();
-        setShopName(profData.ShopName || "Elite Workspace");
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -579,6 +609,57 @@ export default function Home() {
     ? (((todayProfit - yesterdayProfit) / yesterdayProfit) * 100).toFixed(1)
     : 0;
 
+  const transformedInvoices = invoices.map((inv, idx) => {
+    const colors = ["#6366f1", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6", "#ec4899", "#06b6d4"];
+    const color = colors[idx % colors.length];
+
+    const initials = inv.customerName
+      ? inv.customerName.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()
+      : "??";
+
+    const invDate = parseInvoiceDate(inv.date);
+
+    const formattedDate = invDate
+      ? invDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+      : "Invalid date";
+
+    return {
+      id: `#INV-${inv.invoiceNumber}`,
+      customer: inv.customerName || "Unknown",
+      email: inv.email || "N/A",
+      phone: inv.phone || "+91 XXXXX XXXXX",
+      avatar: initials,
+      color,
+      amount: Number(inv.total) || 0,
+      profit: Number(inv.profit) || 0,
+      method: inv.paymode || "CASH",
+      date: formattedDate,
+      note: "Payment recorded",
+      rawDate: invDate,
+      _id: inv._id,
+    };
+  });
+
+  const filteredInvoices = transformedInvoices.filter((inv) => {
+    const matchSearch =
+      inv.customer.toLowerCase().includes(search.toLowerCase()) ||
+      inv.id.toLowerCase().includes(search.toLowerCase());
+
+    let matchDate = true;
+    if (dateRange.start) {
+      const startDate = new Date(dateRange.start);
+      startDate.setHours(0, 0, 0, 0);
+      matchDate = inv.rawDate ? inv.rawDate >= startDate : false;
+    }
+    if (matchDate && dateRange.end) {
+      const endDate = new Date(dateRange.end);
+      endDate.setHours(23, 59, 59, 999);
+      matchDate = inv.rawDate ? inv.rawDate <= endDate : false;
+    }
+
+    return matchSearch && matchDate;
+  });
+
   useEffect(() => {
     const tag = document.createElement("style");
     tag.setAttribute("data-home-styles", "true");
@@ -589,8 +670,6 @@ export default function Home() {
       tag.remove();
     };
   }, []);
-
-  const tabs = ["Overview", "Reports", "History"];
 
   // Prepare inventory data from products
   const inventory = lowStockProducts.slice(0, 5).map(p => ({
@@ -615,6 +694,8 @@ export default function Home() {
     navigate("/login");
   };
 
+  const ownerName = user?.username || "";
+
 
   if (loading) {
     return (
@@ -629,44 +710,89 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-base)" }}>
-      <Sidebar shopName={shopName} onLogout={handleLogout} />
+      <Sidebar onLogout={handleLogout} />
 
       {/* ── Topbar ──────────────────────────────────────────────────── */}
-      <header className="topbar" style={{ left: SIDEBAR_WIDTH }}>
-        {/* Search */}
-        <div className="search-wrap">
-          <Icon d={ICONS.search} size={13} color="var(--text-muted)" />
-          <input placeholder="Search invoices, clients..." />
-        </div>
+      <header
+          style={{
+            padding: "16px 28px",
+            borderBottom: "1px solid var(--border)",
+            marginLeft: SIDEBAR_WIDTH,
+            position: "fixed",
+            top: 0,
+            right: 0,
+            left: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "var(--bg-topbar)",
+            backdropFilter: "blur(12px)",
+            zIndex: 10,
+          }}
+        >
+          <div
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid var(--border)",
+              borderRadius: 10,
+              padding: "8px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span style={{ color: "#6b7280", fontSize: 14 }}>🔍</span>
+            <input
+              // value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search across platform..."
+              style={{
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "var(--text-primary)",
+                fontSize: 13,
+                width: 160,
+              }}
+            />
+          </div>
 
-        {/* Tabs */}
-        <div className="topbar-tabs">
-          {tabs.map(t => (
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
-              key={t}
-              className={`tab ${activeTab === t ? "active" : ""}`}
-              onClick={() => setActiveTab(t)}
-            >{t}</div>
-          ))}
-        </div>
-
-        {/* Right actions */}
-        <div className="topbar-right">
-          <div className="icon-btn"><Icon d={ICONS.bell} size={15} /></div>
-          <div className="icon-btn"><Icon d={ICONS.moon} size={15} /></div>
-          <button className="upgrade-btn">Upgrade Plan</button>
-        </div>
-      </header>
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: "var(--bg-card)",
+                border: "1px solid var(--border)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", fontSize: 16,
+              }}
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
+            </div>
+            <button
+              style={{
+                background: "linear-gradient(135deg,#6366f1,#818cf8)",
+                border: "none", borderRadius: 10,
+                color: "#fff", padding: "8px 18px",
+                fontSize: 13, fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              Upgrade Plan
+            </button>
+          </div>
+        </header>
 
       {/* ── Main Content ─────────────────────────────────────────────── */}
-      <main className="main" style={{ marginLeft: SIDEBAR_WIDTH }}>
+      <main className="main" style={{ marginLeft: SIDEBAR_WIDTH, paddingTop: "52px" }}>
         <div className="content">
 
           {/* Greeting row */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
             <div>
               <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", marginBottom: 4 }}>
-                Good day, {shopName} 👋
+                Good day{ownerName ? `, ${ownerName}` : ""} 👋
               </h1>
               <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
                 Here is what's happening with your workspace today.
@@ -768,86 +894,145 @@ export default function Home() {
 
           {/* Recent Transactions Table */}
           <div className="rt-wrap">
-            {/* Header */}
             <div className="rt-header">
               <span className="rt-title">Recent Transactions</span>
               <div className="rt-header-right">
-                <div className="rt-filter-icon">
-                  <span />
-                  <span />
-                </div>
                 <span className="rt-view-all" onClick={() => navigate("/invoices")}>View All</span>
               </div>
             </div>
 
-            {/* Column labels */}
-            <div className="rt-col-headers">
-              <span className="rt-col-label">Invoice</span>
-              <span className="rt-col-label">Customer</span>
-              <span className="rt-col-label">Status</span>
-              <span className="rt-col-label">Items</span>
-              <span className="rt-col-label">Total</span>
-              <span className="rt-col-label">Mode</span>
-              <span className="rt-col-label right">Profit</span>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 980 }}>
+                <thead>
+                  <tr style={{ background: "rgba(99,102,241,.06)", borderBottom: "1px solid var(--border)" }}>
+                    {["Invoice ID", "Customer", "Phone", "Amount", "Profit", "Payment", "Date", "Actions"].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: "12px 16px", textAlign: "left",
+                          fontSize: 11, fontWeight: 600,
+                          color: "var(--text-muted)", letterSpacing: 0.8,
+                          textTransform: "uppercase", whiteSpace: "nowrap",
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredInvoices.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ padding: "36px 16px", textAlign: "center", color: "var(--text-muted)" }}>
+                        <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+                        <div style={{ fontSize: 14 }}>No transactions found</div>
+                        <div style={{ fontSize: 12, marginTop: 8 }}>
+                          <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => navigate("/createbill")}>
+                            Create your first invoice
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredInvoices.map((inv) => (
+                      <tr
+                        key={inv.id}
+                        style={{ borderBottom: "1px solid var(--border)", cursor: "pointer" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-card-hover)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        onClick={() => navigate(`/invoice/${inv._id}`)}
+                      >
+                        <td style={{ padding: "16px 16px" }}>
+                          <span style={{ fontFamily: "monospace", fontSize: 13, color: "var(--accent)", fontWeight: 500 }}>
+                            {inv.id}
+                          </span>
+                        </td>
+                        <td style={{ padding: "16px 16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <InvoiceAvatar name={inv.avatar} color={inv.color} />
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{inv.customer}</div>
+                              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{inv.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: "16px 16px" }}>
+                          <span style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-secondary)" }}>{inv.phone}</span>
+                        </td>
+                        <td style={{ padding: "16px 16px" }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>{fmt(inv.amount)}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{inv.method}</div>
+                        </td>
+                        <td style={{ padding: "16px 16px" }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--green)" }}>{fmt(inv.profit)}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                            {inv.amount > 0 ? Math.round((inv.profit / inv.amount) * 100) : 0}% margin
+                          </div>
+                        </td>
+                        <td style={{ padding: "16px 16px" }}>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              color: "var(--text-muted)",
+                              background: "rgba(99,102,241,.06)",
+                              border: "1px solid var(--border)",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              textTransform: "uppercase",
+                              letterSpacing: 0.8,
+                            }}
+                          >
+                            {inv.method}
+                          </span>
+                        </td>
+                        <td style={{ padding: "16px 16px" }}>
+                          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{inv.date}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, fontWeight: 500 }}>
+                            {inv.note}
+                          </div>
+                        </td>
+                        <td style={{ padding: "16px 16px" }}>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/invoice/${inv._id}`);
+                              }}
+                              style={{
+                                width: 30, height: 30, borderRadius: 8,
+                                background: "rgba(99,102,241,.1)",
+                                border: "1px solid rgba(99,102,241,.2)",
+                                color: "#818cf8", cursor: "pointer", fontSize: 14,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                              }}
+                              title="View Invoice"
+                            >
+                              👁
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log("Download invoice:", inv.id);
+                              }}
+                              style={{
+                                width: 30, height: 30, borderRadius: 8,
+                                background: "rgba(16,185,129,.08)",
+                                border: "1px solid rgba(16,185,129,.2)",
+                                color: "#34d399", cursor: "pointer", fontSize: 14,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                              }}
+                              title="Download Invoice"
+                            >
+                              ⬇
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-
-            {/* Rows */}
-            {invoices.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-                <div style={{ fontSize: 14 }}>No transactions yet</div>
-                <div style={{ fontSize: 12, marginTop: 8 }}>
-                  <span style={{ color: "#7c5cfc", cursor: "pointer" }} onClick={() => navigate("/createbill")}>
-                    Create your first invoice
-                  </span>
-                </div>
-              </div>
-            ) : (
-              [...invoices].reverse().slice(0, 5).map((inv, idx) => {
-                // Generate avatar gradient colors
-                const gradients = [
-                  "linear-gradient(135deg,#7c5cfc,#4f3bc0)",
-                  "linear-gradient(135deg,#f472b6,#9333ea)",
-                  "linear-gradient(135deg,#6366f1,#2563eb)",
-                  "linear-gradient(135deg,#f59e0b,#b45309)",
-                  "linear-gradient(135deg,#10b981,#059669)",
-                ];
-                const avatarBg = gradients[idx % gradients.length];
-                
-                // Get initials from customer name
-                const initials = inv.customerName
-                  ? inv.customerName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
-                  : "??";
-                
-                // Determine status (you can add a status field to your invoice schema if needed)
-                const status = inv.paymentStatus || "paid"; // Default to paid if no status field
-                
-                return (
-                  <div 
-                    className="rt-row" 
-                    key={inv._id || idx}
-                    onClick={() => navigate(`/invoice/${inv._id}`)}
-                  >
-                    <span className="rt-invoice">#{inv.invoiceNumber}</span>
-                    <div className="rt-customer">
-                      <div className="rt-avatar" style={{ background: avatarBg }}>
-                        {initials}
-                      </div>
-                      <span className="rt-customer-name">{inv.customerName || "Unknown"}</span>
-                    </div>
-                    <div>
-                      <span className={`rt-badge ${status.toLowerCase()}`}>
-                        {status.toUpperCase()}
-                      </span>
-                    </div>
-                    <span className="rt-items">{inv.items?.length || 0}</span>
-                    <span className="rt-total">₹{Number(inv.total || 0).toLocaleString("en-IN")}</span>
-                    <span className="rt-mode">{inv.paymode || "CASH"}</span>
-                    <span className="rt-profit">+₹{Number(inv.profit || 0).toLocaleString("en-IN")}</span>
-                  </div>
-                );
-              })
-            )}
           </div>
         </div>
       </main>

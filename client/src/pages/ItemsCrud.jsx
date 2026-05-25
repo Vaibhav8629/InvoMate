@@ -3,8 +3,10 @@
 // Font: Add to index.html → <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 
 import { useState, useEffect } from "react";
-import { apiGet, apiDelete } from "../utils/api";
+import { useNavigate } from "react-router-dom";
+import { apiGet, apiPost, apiPut, apiDelete } from "../utils/api";
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
+import { useAuth } from "../store/auth";
 
 // ─── Helper Functions ─────────────────────────────────────────────────────────
 
@@ -81,11 +83,12 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`relative rounded-xl border transition-all duration-200 p-4 flex flex-col gap-3 cursor-pointer
-        ${hovered
-          ? "border-violet-500/40 bg-[#1a1d2e] shadow-lg shadow-violet-900/20"
-          : "border-white/8 bg-[#13151f]"
-        }`}
+      className="relative rounded-xl border transition-all duration-200 p-4 flex flex-col gap-3 cursor-pointer"
+      style={{
+        background: hovered ? "var(--surface-2)" : "var(--surface)",
+        borderColor: hovered ? "rgba(99,102,241,.4)" : "var(--border-subtle)",
+        boxShadow: hovered ? "0 12px 24px rgba(79,70,229,0.18)" : "none",
+      }}
     >
       {/* Edit icon */}
       <button 
@@ -160,10 +163,27 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function InventoryManagement() {
+  const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [search, setSearch] = useState("");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState("add");
+  const [editingProductId, setEditingProductId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const [formData, setFormData] = useState({
+    item_code: "",
+    HSN: "",
+    item: "",
+    price: "",
+    category: "",
+    GST: "",
+    Stock: "",
+    profit: "",
+  });
 
   // Fetch products from backend
   useEffect(() => {
@@ -189,10 +209,118 @@ export default function InventoryManagement() {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      item_code: "",
+      HSN: "",
+      item: "",
+      price: "",
+      category: "",
+      GST: "",
+      Stock: "",
+      profit: "",
+    });
+    setFormError(null);
+  };
+
+  const openAddDialog = () => {
+    resetForm();
+    setDialogMode("add");
+    setEditingProductId(null);
+    setIsDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setFormError(null);
+  };
+
+  const handleFormChange = (field) => (e) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormError(null);
+
+    const requiredFields = ["item_code", "HSN", "item", "price", "category", "GST", "Stock", "profit"];
+    const missing = requiredFields.filter((key) => !String(formData[key]).trim());
+    if (missing.length > 0) {
+      setFormError("Please fill in all fields.");
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      price: Number(formData.price),
+      GST: Number(formData.GST),
+      Stock: Number(formData.Stock),
+      profit: Number(formData.profit),
+    };
+
+    try {
+      setIsSubmitting(true);
+
+      if (dialogMode === "add") {
+        const response = await apiPost(
+          `${import.meta.env.VITE_API_URL}/api/auth/addproducts`,
+          payload
+        );
+
+        if (!response.ok) {
+          const message = response.status === 400
+            ? "Invalid product details."
+            : "Failed to add product.";
+          setFormError(message);
+          return;
+        }
+
+        const created = await response.json();
+        setProducts((prev) => [created, ...prev]);
+        closeDialog();
+        return;
+      }
+
+      const response = await apiPut(
+        `${import.meta.env.VITE_API_URL}/api/auth/updateproduct`,
+        { _id: editingProductId, ...payload }
+      );
+
+      if (!response.ok) {
+        const message = response.status === 400
+          ? "Invalid product details."
+          : "Failed to update product.";
+        setFormError(message);
+        return;
+      }
+
+      setProducts((prev) => prev.map((p) => (
+        p._id === editingProductId ? { ...p, ...payload } : p
+      )));
+      closeDialog();
+    } catch (err) {
+      console.error("Error saving product:", err);
+      setFormError("Error connecting to server.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleEdit = (product) => {
-    // TODO: Implement edit functionality
-    console.log("Edit product:", product);
-    alert(`Edit functionality for ${product.item} - Coming soon!`);
+    setFormData({
+      item_code: product.item_code ?? "",
+      HSN: product.HSN ?? "",
+      item: product.item ?? "",
+      price: product.price ?? "",
+      category: product.category ?? "",
+      GST: product.GST ?? "",
+      Stock: product.Stock ?? "",
+      profit: product.profit ?? "",
+    });
+    setDialogMode("edit");
+    setEditingProductId(product._id);
+    setFormError(null);
+    setIsDialogOpen(true);
   };
 
   const handleDelete = async (productId) => {
@@ -224,24 +352,35 @@ export default function InventoryManagement() {
 
   const stats = calculateStats(products);
 
+  const handleLogout = () => {
+    logoutUser();
+    navigate("/login");
+  };
+
   return (
     <div
-      className="min-h-screen bg-[#0e1018] text-gray-200"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", paddingLeft: SIDEBAR_WIDTH }}
+      className="min-h-screen"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", paddingLeft: SIDEBAR_WIDTH, background: "var(--bg-base)", color: "var(--text-primary)" }}
     >
-      <Sidebar />
+      <Sidebar onLogout={handleLogout} />
 
       {/* ── Main Content ── */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-[#0e1018]/80 backdrop-blur-md sticky top-0 z-10">
+        <header
+          className="flex items-center justify-between px-8 py-4 border-b border-white/5 backdrop-blur-md sticky top-0 z-10"
+          style={{ background: "var(--surface)", borderColor: "var(--border-subtle)" }}
+        >
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">Inventory Management</h1>
             <p className="text-xs text-gray-500 mt-0.5">Real-time stock tracking and SKU analytics.</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Search */}
-            <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-lg px-3 py-2">
+            <div
+              className="flex items-center gap-2 rounded-lg px-3 py-2"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border-subtle)" }}
+            >
               <span className="text-gray-500 text-sm">🔍</span>
               <input
                 type="text"
@@ -251,17 +390,20 @@ export default function InventoryManagement() {
                 className="bg-transparent outline-none text-sm text-gray-300 placeholder-gray-600 w-44"
               />
             </div>
-            {/* Filter icon */}
-            <button className="w-9 h-9 rounded-lg bg-white/5 border border-white/8 text-gray-400 hover:text-gray-200 hover:bg-white/10 transition-colors flex items-center justify-center text-sm">
-              ⚙
-            </button>
             {/* Bell */}
-            <button className="w-9 h-9 rounded-lg bg-white/5 border border-white/8 text-gray-400 hover:text-gray-200 hover:bg-white/10 transition-colors flex items-center justify-center text-sm">
-              🔔
-            </button>
             {/* Export */}
-            <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1d2e] border border-violet-500/30 text-violet-300 text-sm font-semibold hover:bg-violet-600/20 transition-colors">
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-violet-500/30 text-violet-300 text-sm font-semibold hover:bg-violet-600/20 transition-colors"
+              style={{ background: "var(--surface-2)" }}
+            >
               ☁ Export CSV
+            </button>
+            {/* Add Product */}
+            <button
+              onClick={openAddDialog}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600/20 border border-violet-500/40 text-violet-200 text-sm font-semibold hover:bg-violet-600/30 transition-colors"
+            >
+              ＋ Add Item
             </button>
           </div>
         </header>
@@ -323,6 +465,173 @@ export default function InventoryManagement() {
           )}
         </div>
       </main>
+
+      {/* Add Product Dialog */}
+      {isDialogOpen && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-sm" style={{ background: "var(--overlay)" }}>
+          <div className="w-full max-w-2xl mx-4 rounded-2xl border shadow-2xl" style={{ background: "var(--surface)", borderColor: "var(--border-subtle)" }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-widest font-mono">
+                  {dialogMode === "add" ? "New Product" : "Update Product"}
+                </p>
+                <h2 className="text-xl font-semibold text-white">
+                  {dialogMode === "add" ? "Add Inventory Item" : "Edit Inventory Item"}
+                </h2>
+              </div>
+              <button
+                onClick={closeDialog}
+                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-gray-200 hover:bg-white/10 transition-colors"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="px-6 py-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
+                    Item Code
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.item_code}
+                    onChange={handleFormChange("item_code")}
+                    placeholder="SKU-1029"
+                    className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
+                    HSN
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.HSN}
+                    onChange={handleFormChange("HSN")}
+                    placeholder="8471"
+                    className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
+                    Item Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.item}
+                    onChange={handleFormChange("item")}
+                    placeholder="Wireless Keyboard"
+                    className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={handleFormChange("category")}
+                    placeholder="Accessories"
+                    className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
+                    Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={handleFormChange("price")}
+                    placeholder="1499"
+                    className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
+                    GST (%)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.GST}
+                    onChange={handleFormChange("GST")}
+                    placeholder="18"
+                    className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
+                    Stock
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.Stock}
+                    onChange={handleFormChange("Stock")}
+                    placeholder="120"
+                    className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
+                    Profit (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.profit}
+                    onChange={handleFormChange("profit")}
+                    placeholder="22"
+                    className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
+                  />
+                </div>
+              </div>
+
+              {formError && (
+                <p className="mt-4 text-sm text-rose-400 font-mono">{formError}</p>
+              )}
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={closeDialog}
+                  className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-sm font-semibold hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-lg bg-violet-600/30 border border-violet-500/50 text-violet-200 text-sm font-semibold hover:bg-violet-600/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : dialogMode === "add"
+                      ? "Save Item"
+                      : "Update Item"
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -59,9 +59,17 @@ const saveInvoice = async (req, res) => {
 const getInvoices = async (req, res) => {
     const userData = req.user;
     try {
-        const invoices = await Invoice.find({
-            user: userData._id
-        });
+    const limit = Number.parseInt(req.query.limit, 10);
+
+    let query = Invoice.find({
+      user: userData._id
+    }).sort({ createdAt: -1 });
+
+    if (Number.isFinite(limit) && limit > 0) {
+      query = query.limit(limit);
+    }
+
+    const invoices = await query;
 
         res.status(200).json(invoices);
     } catch (error) {

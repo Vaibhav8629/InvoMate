@@ -1,5 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../store/auth";
+import NotificationBell from "./NotificationBell";
 
 export const SIDEBAR_WIDTH = 220;
 
@@ -16,17 +18,19 @@ const isActivePath = (current, target) => {
   return current.startsWith(`${target}/`);
 };
 
-export default function Sidebar({ shopName = "Elite Workspace", onLogout }) {
+export default function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  const ownerName = user?.username || "";
 
   return (
     <aside
       style={{
         width: SIDEBAR_WIDTH,
         flexShrink: 0,
-        background: "#0d1017",
-        borderRight: "1px solid rgba(99,102,241,.12)",
+        background: "var(--sidebar-bg)",
+        borderRight: "1px solid var(--sidebar-border)",
         display: "flex",
         flexDirection: "column",
         padding: "24px 0",
@@ -35,24 +39,30 @@ export default function Sidebar({ shopName = "Elite Workspace", onLogout }) {
         left: 0,
         bottom: 0,
         fontFamily: "'Plus Jakarta Sans', sans-serif",
-        color: "#e2e8f0",
+        color: "var(--text-primary)",
         zIndex: 20,
       }}
     >
       <div style={{ padding: "0 20px 24px", borderBottom: "1px solid rgba(99,102,241,.1)" }}>
-        <div
-          style={{
-            fontSize: 20,
-            fontWeight: 700,
-            background: "linear-gradient(135deg,#818cf8,#6366f1)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          InvoMate
-        </div>
-        <div style={{ fontSize: 10, color: "#4b5563", letterSpacing: 2, fontWeight: 500, marginTop: 2 }}>
-          {shopName.toUpperCase()}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              background: "linear-gradient(135deg,#818cf8,#6366f1)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            InvoMate
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {user?._id && (
+              <div style={{ color: "#9ca3af" }}>
+                <NotificationBell userId={user._id} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -87,6 +97,24 @@ export default function Sidebar({ shopName = "Elite Workspace", onLogout }) {
 
       {onLogout ? (
         <div style={{ padding: "16px 12px 0", borderTop: "1px solid rgba(99,102,241,.1)" }}>
+          {ownerName ? (
+            <div
+              style={{
+                padding: "10px 12px",
+                borderRadius: 12,
+                background: "rgba(99,102,241,.08)",
+                border: "1px solid rgba(99,102,241,.2)",
+                color: "#e2e8f0",
+                marginBottom: 10,
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 10, color: "#94a3b8", letterSpacing: 1.2, textTransform: "uppercase" }}>
+                Account Owner
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{ownerName}</div>
+            </div>
+          ) : null}
           <div
             onClick={onLogout}
             style={{

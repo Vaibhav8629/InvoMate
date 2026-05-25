@@ -68,6 +68,22 @@ const updateProduct = async (req, res) => {
         if (!updatedData) {
             return res.status(404).json({ message: "Product not found." });
         }
+
+        // Create notification for product update
+        const notificationService = req.app.get("notificationService");
+        if (notificationService) {
+            try {
+                await notificationService.createNotification(
+                    userId,
+                    "product",
+                    `Product "${updatedData.item}" was updated successfully`,
+                    "/products"
+                );
+            } catch (notificationError) {
+                console.error("Error creating product update notification:", notificationError);
+            }
+        }
+
         res.status(200).json({ message: "Product updated successfully." });
     } catch (error) {
         res.status(500).json({ errorMessage: error.message });

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, apiPut } from "../utils/api";
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
+import { useAuth } from "../store/auth";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -21,7 +22,10 @@ const FieldBox = ({ label, value, mono = false, children, isEditing, onChange })
     {label && (
       <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">{label}</p>
     )}
-    <div className="bg-[#0d0f18] border border-white/8 rounded-lg px-4 py-3 min-h-[48px] flex items-center">
+    <div
+      className="border rounded-lg px-4 py-3 min-h-[48px] flex items-center"
+      style={{ background: "var(--surface-2)", borderColor: "var(--border-subtle)" }}
+    >
       {children || (
         isEditing ? (
           <input
@@ -44,6 +48,9 @@ const FieldBox = ({ label, value, mono = false, children, isEditing, onChange })
 
 export default function ShopProfile() {
   const navigate = useNavigate();
+  const { logoutUser } = useAuth();
+  const surfaceCardStyle = { background: "var(--surface)", borderColor: "var(--border-subtle)" };
+  const surfaceMutedStyle = { background: "var(--surface-2)", borderColor: "var(--border-subtle)" };
   const [copied, setCopied] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -138,6 +145,11 @@ export default function ShopProfile() {
     setIsEditing(true);
   };
 
+  const handleLogout = () => {
+    logoutUser();
+    navigate("/login");
+  };
+
   const handleCancelEdit = () => {
     setIsEditing(false);
     // Reset form data to original profile data
@@ -202,15 +214,18 @@ export default function ShopProfile() {
 
   return (
     <div
-      className="min-h-screen bg-[#0e1018] text-gray-200"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", paddingLeft: SIDEBAR_WIDTH }}
+      className="min-h-screen"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", paddingLeft: SIDEBAR_WIDTH, background: "var(--bg-base)", color: "var(--text-primary)" }}
     >
-      <Sidebar shopName={profileData?.ShopName || "Elite Workspace"} />
+      <Sidebar onLogout={handleLogout} />
 
       {/* ── Main Content ── */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-[#0e1018]/80 backdrop-blur-md sticky top-0 z-10">
+        <header
+          className="flex items-center justify-between px-8 py-4 border-b border-white/5 backdrop-blur-md sticky top-0 z-10"
+          style={{ background: "var(--surface)", borderColor: "var(--border-subtle)" }}
+        >
           <div>
             <h1 className="text-xl font-bold text-white tracking-tight">Shop Profile</h1>
             <p className="text-xs text-gray-500 mt-0.5">Manage your workspace identity and billing details</p>
@@ -273,9 +288,9 @@ export default function ShopProfile() {
               {/* ── Business Identity Card ── */}
               <div className="grid grid-cols-[1fr_auto] gap-4">
                 {/* Left — company info */}
-                <div className="bg-[#13151f] border border-white/8 rounded-xl p-5 flex items-center gap-5">
+                <div className="border rounded-xl p-5 flex items-center gap-5" style={surfaceCardStyle}>
                   {/* Logo placeholder */}
-                  <div className="w-20 h-20 rounded-xl bg-[#0d0f18] border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-20 h-20 rounded-xl border flex items-center justify-center flex-shrink-0 overflow-hidden" style={surfaceMutedStyle}>
                     <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
                       <span className="text-3xl">🏪</span>
                     </div>
@@ -319,7 +334,7 @@ export default function ShopProfile() {
                 </div>
 
                 {/* Right — GST identifier */}
-                <div className="bg-[#13151f] border border-white/8 rounded-xl p-5 flex flex-col justify-center min-w-[240px]">
+                <div className="border rounded-xl p-5 flex flex-col justify-center min-w-[240px]" style={surfaceCardStyle}>
                   <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest mb-2">GST Identifier</p>
                   {isEditing ? (
                     <input
@@ -339,7 +354,7 @@ export default function ShopProfile() {
               </div>
 
               {/* ── Business Information ── */}
-              <div className="bg-[#13151f] border border-white/8 rounded-xl p-6">
+              <div className="border rounded-xl p-6" style={surfaceCardStyle}>
                 <SectionHeader icon="▣" title="Business Information" />
                 <div className="flex flex-col gap-4">
                   {/* GST + Postal */}
@@ -370,10 +385,10 @@ export default function ShopProfile() {
               </div>
 
               {/* ── Contact Details ── */}
-              <div className="bg-[#13151f] border border-white/8 rounded-xl p-6">
+              <div className="border rounded-xl p-6" style={surfaceCardStyle}>
                 <SectionHeader icon="?" title="Contact Details" />
                 <div className="flex gap-4">
-                  <div className="flex-1 bg-[#0d0f18] border border-white/8 rounded-lg px-4 py-4 flex items-center gap-3">
+                  <div className="flex-1 border rounded-lg px-4 py-4 flex items-center gap-3" style={surfaceMutedStyle}>
                     <span className="text-gray-500 text-lg flex-shrink-0">📞</span>
                     <div className="flex-1">
                       <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest mb-1">Phone Number</p>
@@ -392,7 +407,7 @@ export default function ShopProfile() {
                       )}
                     </div>
                   </div>
-                  <div className="flex-1 bg-[#0d0f18] border border-white/8 rounded-lg px-4 py-4 flex items-center gap-3">
+                  <div className="flex-1 border rounded-lg px-4 py-4 flex items-center gap-3" style={surfaceMutedStyle}>
                     <span className="text-gray-500 text-lg flex-shrink-0">✉</span>
                     <div className="flex-1">
                       <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest mb-1">Billing Email</p>
@@ -415,12 +430,12 @@ export default function ShopProfile() {
               </div>
 
               {/* ── Shop Identifiers ── */}
-              <div className="bg-[#13151f] border border-white/8 rounded-xl p-6">
+              <div className="border rounded-xl p-6" style={surfaceCardStyle}>
                 <SectionHeader icon="▭" title="Shop Identifiers" />
                 <div className="w-[280px]">
                   <div className="flex flex-col gap-1.5">
                     <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Internal Shop Code</p>
-                    <div className="bg-[#0d0f18] border border-white/8 rounded-lg px-4 py-3 flex items-center justify-between group">
+                    <div className="border rounded-lg px-4 py-3 flex items-center justify-between group" style={surfaceMutedStyle}>
                       {isEditing ? (
                         <input
                           type="text"

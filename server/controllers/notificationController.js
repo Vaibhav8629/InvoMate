@@ -145,10 +145,31 @@ const getUnreadCount = async (req, res) => {
   }
 };
 
+// Clear all notifications for the user
+const clearAllNotifications = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    await Notification.deleteMany({ userId });
+
+    res.status(200).json({
+      success: true,
+      message: "All notifications cleared"
+    });
+  } catch (error) {
+    console.error("Error clearing notifications:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while clearing notifications"
+    });
+  }
+};
+
 module.exports = {
   createNotification,
   getNotifications,
   markAsRead,
   markAllAsRead,
-  getUnreadCount
+  getUnreadCount,
+  clearAllNotifications
 };

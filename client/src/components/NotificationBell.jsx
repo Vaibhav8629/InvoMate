@@ -25,7 +25,8 @@ import socketService from "../services/socket";
 import {
   getNotifications,
   markNotificationAsRead,
-  markAllNotificationsAsRead
+  markAllNotificationsAsRead,
+  clearAllNotifications
 } from "../services/notificationApi";
 
 const NotificationBell = ({ userId }) => {
@@ -117,6 +118,17 @@ const NotificationBell = ({ userId }) => {
     }
   };
 
+  const handleClearAll = async () => {
+    try {
+      await clearAllNotifications();
+      setNotifications([]);
+      setUnreadCount(0);
+      handleClose();
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+    }
+  };
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case "invoice":
@@ -161,7 +173,7 @@ const NotificationBell = ({ userId }) => {
           }}
         >
           <Badge badgeContent={unreadCount} color="error">
-            <NotificationsIcon />
+            <span style={{ fontSize: 18 }}>🔔</span>
           </Badge>
         </IconButton>
       </Tooltip>
@@ -199,22 +211,40 @@ const NotificationBell = ({ userId }) => {
           <Typography variant="h6" fontWeight="bold">
             Notifications
           </Typography>
-          {unreadCount > 0 && (
-            <Button
-              size="small"
-              onClick={handleMarkAllAsRead}
-              sx={{
-                color: "white",
-                textTransform: "none",
-                fontSize: "0.75rem",
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.1)"
-                }
-              }}
-            >
-              Mark all read
-            </Button>
-          )}
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {unreadCount > 0 && (
+              <Button
+                size="small"
+                onClick={handleMarkAllAsRead}
+                sx={{
+                  color: "white",
+                  textTransform: "none",
+                  fontSize: "0.75rem",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)"
+                  }
+                }}
+              >
+                Mark all read
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                size="small"
+                onClick={handleClearAll}
+                sx={{
+                  color: "white",
+                  textTransform: "none",
+                  fontSize: "0.75rem",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)"
+                  }
+                }}
+              >
+                Clear all
+              </Button>
+            )}
+          </Box>
         </Box>
 
         <Divider />
