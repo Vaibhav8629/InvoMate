@@ -6,6 +6,7 @@ const Product = require('../models/Product');
 const generateDailyReport = require('../utils/generateDailyReport');
 const authMiddleware = require('../middleware/auth-middleware');
 const checkSubscription = require('../middleware/subscription-middleware');
+const gstController = require('../controllers/gstController');
 
 router.get('/daily', authMiddleware, checkSubscription, async (req, res) => {
   try {
@@ -51,5 +52,9 @@ router.get('/daily', authMiddleware, checkSubscription, async (req, res) => {
     }
   }
 });
+
+router.get('/gst', authMiddleware, checkSubscription, gstController.getGstReport);
+router.get('/gst/export/csv', authMiddleware, checkSubscription, gstController.exportGstCsv);
+router.get('/gst/export/pdf', authMiddleware, checkSubscription, gstController.exportGstPdf);
 
 module.exports = router;

@@ -6,7 +6,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
-import { getTemplate } from "../templates";
+import InvoiceTemplateRenderer from "./invoices/InvoiceTemplateRenderer";
 
 // npm install html2pdf.js
 // import html2pdf from "html2pdf.js";  ← uncomment when installed
@@ -14,8 +14,6 @@ import { getTemplate } from "../templates";
 export default function InvoicePreview({ invoice, templateId = "classic" }) {
   const previewRef = useRef(null);
   const [exporting, setExporting] = useState(false);
-
-  const { component: TemplateComponent, name: templateName } = getTemplate(templateId);
 
   const handleExportPDF = async () => {
     if (!previewRef.current) return;
@@ -56,7 +54,7 @@ export default function InvoicePreview({ invoice, templateId = "classic" }) {
         <Stack direction="row" alignItems="center" spacing={1}>
           <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "primary.main" }} />
           <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "text.secondary" }}>
-            Template: <Box component="span" sx={{ color: "text.primary" }}>{templateName}</Box>
+            Template: <Box component="span" sx={{ color: "text.primary" }}>{templateId}</Box>
           </Typography>
         </Stack>
 
@@ -123,8 +121,8 @@ export default function InvoicePreview({ invoice, templateId = "classic" }) {
             mb: { xs: "-300px", sm: "-200px", md: "-100px", lg: 0 },
           }}
         >
-          <Box ref={previewRef}>
-            <TemplateComponent invoice={invoice} />
+          <Box ref={previewRef} id="invoice-content">
+            <InvoiceTemplateRenderer invoice={{ ...invoice, templateId }} />
           </Box>
         </Box>
       </Box>

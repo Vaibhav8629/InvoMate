@@ -118,7 +118,7 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
         <div>
           <p className="text-[9px] font-mono text-gray-600 uppercase tracking-widest mb-0.5">Margin</p>
           <p className={`text-lg font-bold font-mono ${marginDir === "up" ? "text-violet-400" : "text-rose-400"}`}>
-            {product.profit}%
+            {product.profit}₹
             <span className="text-xs ml-0.5">{marginDir === "up" ? "↗" : "↘"}</span>
           </p>
         </div>
@@ -372,8 +372,8 @@ export default function InventoryManagement() {
           style={{ background: "var(--surface)", borderColor: "var(--border-subtle)" }}
         >
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Inventory Management</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Real-time stock tracking and SKU analytics.</p>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Inventory Management</h1>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Real-time stock tracking and SKU analytics.</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Search */}
@@ -589,7 +589,7 @@ export default function InventoryManagement() {
                 </div>
                 <div>
                   <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
-                    Profit (%)
+                    Profit (₹)
                   </label>
                   <input
                     type="number"

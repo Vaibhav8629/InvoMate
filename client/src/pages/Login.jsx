@@ -129,12 +129,8 @@ export default function InvoMateLogin() {
           <div className="flex items-center justify-center bg-[#09090f] p-6 lg:p-10 overflow-hidden">
             <div className="w-full max-w-md">
               
-              <h2 className="text-3xl lg:text-4xl font-bold">
-                Welcome back
-              </h2>
-
               <p className="text-gray-400 mt-2 text-sm lg:text-base">
-                Please enter your credentials to access your account.
+                <b>Please enter your credentials to access your account.</b>
               </p>
 
               {/* FORM */}

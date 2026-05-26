@@ -927,7 +927,7 @@ export default function Home() {
                         <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
                         <div style={{ fontSize: 14 }}>No transactions found</div>
                         <div style={{ fontSize: 12, marginTop: 8 }}>
-                          <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => navigate("/createbill")}>
+                          <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => navigate("/invoice/create")}> 
                             Create your first invoice
                           </span>
                         </div>
@@ -940,7 +940,7 @@ export default function Home() {
                         style={{ borderBottom: "1px solid var(--border)", cursor: "pointer" }}
                         onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-card-hover)")}
                         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                        onClick={() => navigate(`/invoice/${inv._id}`)}
+                        onClick={() => navigate(`/invoice/view/${inv._id}`)}
                       >
                         <td style={{ padding: "16px 16px" }}>
                           <span style={{ fontFamily: "monospace", fontSize: 13, color: "var(--accent)", fontWeight: 500 }}>
@@ -996,7 +996,7 @@ export default function Home() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/invoice/${inv._id}`);
+                                navigate(`/invoice/view/${inv._id}`);
                               }}
                               style={{
                                 width: 30, height: 30, borderRadius: 8,

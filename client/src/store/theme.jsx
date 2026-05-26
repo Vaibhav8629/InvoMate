@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 const ThemeContext = createContext(null);
 
 const getInitialTheme = () => {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const saved = window.localStorage.getItem("invoMateTheme");
   if (saved === "light" || saved === "dark") return saved;
   const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;

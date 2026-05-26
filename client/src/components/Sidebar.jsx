@@ -7,8 +7,9 @@ export const SIDEBAR_WIDTH = 220;
 
 const NAV_ITEMS = [
   { label: "Home", path: "/home", icon: "🏠" },
-  { label: "New Invoice", path: "/createbill", icon: "🧾" },
+  { label: "New Invoice", path: "/invoice/create", icon: "🧾" },
   { label: "Invoices", path: "/invoices", icon: "📄" },
+  { label: "GST Reports", path: "/gst-reports", icon: "📊" },
   { label: "Products", path: "/products", icon: "📦" },
   { label: "Profile", path: "/profile", icon: "⚙️" },
 ];
@@ -104,15 +105,15 @@ export default function Sidebar({ onLogout }) {
                 borderRadius: 12,
                 background: "rgba(99,102,241,.08)",
                 border: "1px solid rgba(99,102,241,.2)",
-                color: "#e2e8f0",
+                color: "var(--text-primary)",
                 marginBottom: 10,
                 textAlign: "center",
               }}
             >
-              <div style={{ fontSize: 10, color: "#94a3b8", letterSpacing: 1.2, textTransform: "uppercase" }}>
+              <div style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: 1.2, textTransform: "uppercase" }}>
                 Account Owner
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{ownerName}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4, color: "var(--text-primary)" }}>{ownerName}</div>
             </div>
           ) : null}
           <div

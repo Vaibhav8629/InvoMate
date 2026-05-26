@@ -26,11 +26,13 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Scanner from "../components/Scanner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../store/auth";
 
 const InvoicePage = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const { logoutUser } = useAuth();
   const [signatureUrl, setSignatureUrl] = useState("");
   const [openScanner, setOpenScanner] = useState(false);
@@ -50,6 +52,8 @@ const InvoicePage = () => {
   const [searchItem, setSearchItem] = useState("");
   const [profit, setProfit] = useState(0);
   const [openSuccess, setOpenSuccess] = useState(false);
+  const [templateId, setTemplateId] = useState("classic");
+  const [originalItems, setOriginalItems] = useState([]);
 
   const today = new Date();
   const time = new Date().toLocaleTimeString();
@@ -119,8 +123,8 @@ const InvoicePage = () => {
 
   const handleSaveBill = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/saveinvoice`, {
-        method: "POST",
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth${isEditMode ? `/invoice/${id}` : "/saveinvoice"}`, {
+        method: isEditMode ? "PUT" : "POST",
         credentials: 'include', // Enable cookies
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -128,22 +132,63 @@ const InvoicePage = () => {
           shopAddress: address, shopGST: GST, items: itemsBuy,
           subtotal: Number(subtotal.toFixed(2)), tax: Number(tax.toFixed(2)),
           total: Number(totalAmt.toFixed(2)), date: formattedDate, time,
-          phone, paymode: paymentMode, profit,
+          phone, paymode: paymentMode, profit, templateId,
         }),
       });
-      for (const item of itemsBuy) {
-        try {
+      if (isEditMode) {
+        const itemKey = (item) => String(item.productId || item._id || item.item_code || "");
+        const originalMap = new Map(originalItems.map((item) => [itemKey(item), Number(item.qty || item.quantity || 0)]));
+        const currentKeys = new Set(itemsBuy.map(itemKey));
+
+        for (const item of itemsBuy) {
+          const key = itemKey(item);
+          const oldQty = originalMap.get(key) || 0;
+          const newQty = Number(item.qty || 0);
+          const delta = oldQty - newQty;
+          if (!delta) continue;
+
+          const product = products.find((productItem) => String(productItem._id) === String(item.productId || item._id) || String(productItem.item_code) === String(item.item_code));
+          if (!product) continue;
+
           await fetch(`${import.meta.env.VITE_API_URL}/api/auth/updateproduct`, {
             method: "PUT",
-            credentials: 'include', // Enable cookies
+            credentials: 'include',
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ _id: item._id, Stock: item.Stock - item.qty }),
+            body: JSON.stringify({ _id: product._id, Stock: Number(product.Stock) + delta }),
           });
-        } catch (err) { console.error("Error updating product:", item.name, err); }
+        }
+
+        for (const item of originalItems) {
+          const key = itemKey(item);
+          if (currentKeys.has(key)) continue;
+
+          const product = products.find((productItem) => String(productItem._id) === String(item.productId || item._id) || String(productItem.item_code) === String(item.item_code));
+          if (!product) continue;
+
+          const oldQty = Number(item.qty || item.quantity || 0);
+          await fetch(`${import.meta.env.VITE_API_URL}/api/auth/updateproduct`, {
+            method: "PUT",
+            credentials: 'include',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ _id: product._id, Stock: Number(product.Stock) + oldQty }),
+          });
+        }
+      } else {
+        for (const item of itemsBuy) {
+          try {
+            await fetch(`${import.meta.env.VITE_API_URL}/api/auth/updateproduct`, {
+              method: "PUT",
+              credentials: 'include', // Enable cookies
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ _id: item._id, Stock: item.Stock - item.qty }),
+            });
+          } catch (err) { console.error("Error updating product:", item.name, err); }
+        }
       }
       setInvoiceNum(""); setCustomerName(""); setPhone("");
       setPaymentMode(""); setItemsBuy([]); setSubtotal(0);
-      setTax(0); setTotalAmount(0); setOpenSuccess(true);
+      setTax(0); setTotalAmount(0); setTemplateId("classic"); setOriginalItems([]); setOpenSuccess(true);
+      if (isEditMode) navigate(`/invoice/view/${id}`);
     } catch (err) { console.error(err); }
   };
 
@@ -182,6 +227,48 @@ const InvoicePage = () => {
     });
     setProducts(await res.json());
   };
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchInvoice = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/invoice/${id}`, {
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        const invoice = data?.data;
+        if (!invoice) return;
+
+        setInvoiceNum(invoice.invoiceNumber || "");
+        setCustomerName(invoice.customerName || "");
+        setPhone(String(invoice.phone || ""));
+        setName(invoice.shopName || "");
+        setAddress(invoice.shopAddress || "");
+        setGST(invoice.shopGST || "");
+        setPaymentMode(invoice.paymode || "");
+        setTemplateId(invoice.templateId || "classic");
+
+        const normalizedItems = Array.isArray(invoice.items) ? invoice.items.map((item) => ({
+          ...item,
+          qty: Number(item.qty ?? item.quantity ?? 1),
+          discount: Number(item.discount || 0),
+        })) : [];
+
+        setItemsBuy(normalizedItems);
+        setOriginalItems(normalizedItems);
+        setSubtotal(Number(invoice.subtotal || 0));
+        setTax(Number(invoice.tax || 0));
+        setTotalAmount(Number(invoice.total || 0));
+        setProfit(Number(invoice.profit || 0));
+      } catch (error) {
+        console.error("Error loading invoice for edit:", error);
+      }
+    };
+
+    fetchInvoice();
+  }, [id]);
 
   const handleItemsSearch = async () => {
     if (searchItem === "") fetchProductData();
@@ -268,7 +355,7 @@ const InvoicePage = () => {
             </Box>
             <Box>
               <Typography sx={{ fontSize: "1rem", fontWeight: 700, color: "#0F172A", fontFamily: "'Sora', sans-serif", lineHeight: 1.2 }}>
-                New Invoice
+                {isEditMode ? "Edit Invoice" : "New Invoice"}
               </Typography>
               <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>{formattedDate} · {time}</Typography>
             </Box>
@@ -329,7 +416,7 @@ const InvoicePage = () => {
                   "&:hover": { boxShadow: "0 6px 20px rgba(37,99,235,0.4)", transform: "translateY(-1px)" },
                   transition: "all 0.18s ease",
                 }}>
-                Save Bill
+                {isEditMode ? "Update Bill" : "Save Bill"}
               </Button>
             </Box>
           )}

@@ -18,6 +18,14 @@
 	--border-subtle: rgba(99,102,241,.15);
 }
 
+html[data-theme="dark"] {
+	color-scheme: dark;
+}
+
+html[data-theme="light"] {
+	color-scheme: light;
+}
+
 [data-theme="light"] {
 	--bg-base: #f8fafc;
 	--text-primary: #0f172a;
@@ -37,5 +45,64 @@
 
 body {
 	background: var(--bg-base);
+	color: var(--text-primary);
+}
+
+button,
+input,
+textarea,
+select {
+	color: inherit;
+	font: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+	color: var(--text-muted);
+	opacity: 1;
+}
+
+.text-gray-100,
+.text-gray-200,
+.text-slate-100,
+.text-slate-200,
+.text-zinc-100,
+.text-zinc-200,
+.text-neutral-100,
+.text-neutral-200 {
+	color: var(--text-primary);
+}
+
+.text-gray-300,
+.text-slate-300,
+.text-zinc-300,
+.text-neutral-300,
+.text-gray-400,
+.text-slate-400,
+.text-zinc-400,
+.text-neutral-400,
+.text-gray-500,
+.text-slate-500,
+.text-zinc-500,
+.text-neutral-500,
+.text-gray-600,
+.text-slate-600,
+.text-zinc-600,
+.text-neutral-600 {
+	color: var(--text-secondary);
+}
+
+.text-gray-700,
+.text-slate-700,
+.text-zinc-700,
+.text-neutral-700,
+.text-gray-800,
+.text-slate-800,
+.text-zinc-800,
+.text-neutral-800,
+.text-gray-900,
+.text-slate-900,
+.text-zinc-900,
+.text-neutral-900 {
 	color: var(--text-primary);
 }

@@ -218,34 +218,37 @@ export default function InvoicesPage() {
             zIndex: 10,
           }}
         >
-
-          <div
-            style={{
-              background: "rgba(99,102,241,.08)",
-              border: "1px solid rgba(99,102,241,.2)",
-              borderRadius: 10,
-              padding: "8px 14px",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <span style={{ color: "#6b7280", fontSize: 14 }}>🔍</span>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search across platform..."
-              style={{
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                color: "#e2e8f0",
-                fontSize: 13,
-                width: 160,
-              }}
-            />
-          </div>
+          <div style={{ flex: 1 }} />
+          
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Search */}
+            <div
+              style={{
+                background: "rgba(99,102,241,.08)",
+                border: "1px solid rgba(99,102,241,.2)",
+                borderRadius: 10,
+                padding: "8px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{ color: "var(--text-muted)", fontSize: 14 }}>🔍</span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search across platform..."
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  color: "var(--text-primary)",
+                  fontSize: 13,
+                  width: 180,
+                }}
+              />
+            </div>
+            
             <div
               style={{
                 width: 36, height: 36, borderRadius: 10,
@@ -276,8 +279,8 @@ export default function InvoicesPage() {
           {/* Page Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
             <div>
-              <h1 style={{ fontSize: 32, fontWeight: 700, color: "#f1f5f9", marginBottom: 6 }}>Invoices</h1>
-              <p style={{ color: "#6b7280", fontSize: 14 }}>Manage your billing cycles and track revenue performance.</p>
+              <h1 style={{ fontSize: 32, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>Invoices</h1>
+              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Manage your billing cycles and track revenue performance.</p>
             </div>
             <div style={{ display: "flex", gap: 12 }}>
               <button
@@ -291,7 +294,7 @@ export default function InvoicesPage() {
                 ⬇ Export CSV
               </button>
               <button
-                onClick={() => navigate("/createbill")}
+                onClick={() => navigate("/invoice/create")}
                 style={{
                   background: "linear-gradient(135deg,#6366f1,#818cf8)",
                   border: "none", borderRadius: 10,
@@ -339,7 +342,7 @@ export default function InvoicesPage() {
           {/* Filters */}
           <div style={{ display: "flex", gap: 12, marginBottom: 20, alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ color: "#6b7280", fontSize: 13 }}>📅 Date Range</span>
+              <span style={{ color: "var(--text-muted)", fontSize: 13 }}>📅 Date Range</span>
               <input
                 type="date"
                 value={dateRange.start}
@@ -348,12 +351,12 @@ export default function InvoicesPage() {
                   background: "rgba(99,102,241,.05)",
                   border: "1px solid rgba(99,102,241,.15)",
                   borderRadius: 8,
-                  color: "#e2e8f0",
+                  color: "var(--text-primary)",
                   padding: "6px 10px",
                   fontSize: 12,
                 }}
               />
-              <span style={{ color: "#4b5563", fontSize: 12 }}>to</span>
+              <span style={{ color: "var(--text-muted)", fontSize: 12 }}>to</span>
               <input
                 type="date"
                 value={dateRange.end}
@@ -362,7 +365,7 @@ export default function InvoicesPage() {
                   background: "rgba(99,102,241,.05)",
                   border: "1px solid rgba(99,102,241,.15)",
                   borderRadius: 8,
-                  color: "#e2e8f0",
+                  color: "var(--text-primary)",
                   padding: "6px 10px",
                   fontSize: 12,
                 }}
@@ -370,7 +373,7 @@ export default function InvoicesPage() {
             </div>
             <button
               onClick={() => { setSearch(""); setDateRange({ start: "", end: "" }); }}
-              style={{ marginLeft: "auto", background: "transparent", border: "1px solid rgba(99,102,241,.2)", borderRadius: 8, color: "#6b7280", padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
+              style={{ marginLeft: "auto", background: "transparent", border: "1px solid rgba(99,102,241,.2)", borderRadius: 8, color: "var(--text-muted)", padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
             >
               Reset
             </button>
@@ -388,7 +391,7 @@ export default function InvoicesPage() {
                         style={{
                           padding: "12px 16px", textAlign: "left",
                           fontSize: 11, fontWeight: 600,
-                          color: "#4b5563", letterSpacing: 0.8,
+                          color: "var(--text-muted)", letterSpacing: 0.8,
                           textTransform: "uppercase", whiteSpace: "nowrap",
                         }}
                       >
@@ -414,28 +417,28 @@ export default function InvoicesPage() {
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                           <Avatar name={inv.avatar} color={inv.color} />
                           <div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{inv.customer}</div>
-                            <div style={{ fontSize: 12, color: "#4b5563" }}>{inv.email}</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{inv.customer}</div>
+                            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{inv.email}</div>
                           </div>
                         </div>
                       </td>
                       <td style={{ padding: "16px 16px" }}>
-                        <span style={{ fontFamily: "monospace", fontSize: 12, color: "#6b7280" }}>{inv.phone}</span>
+                        <span style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-muted)" }}>{inv.phone}</span>
                       </td>
                       <td style={{ padding: "16px 16px" }}>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>{fmt(inv.amount)}</div>
-                        <div style={{ fontSize: 11, color: "#4b5563", marginTop: 2 }}>{inv.method}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>{fmt(inv.amount)}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{inv.method}</div>
                       </td>
                       <td style={{ padding: "16px 16px" }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: "#34d399" }}>{fmt(inv.profit)}</div>
-                        <div style={{ fontSize: 11, color: "#4b5563", marginTop: 2 }}>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
                           {Math.round((inv.profit / inv.amount) * 100)}% margin
                         </div>
                       </td>
                       <td style={{ padding: "16px 16px" }}>
                         <span
                           style={{
-                            fontSize: 11, color: "#6b7280",
+                            fontSize: 11, color: "var(--text-muted)",
                             background: "rgba(99,102,241,.06)",
                             border: "1px solid rgba(99,102,241,.12)",
                             padding: "3px 8px", borderRadius: 6,
@@ -445,8 +448,8 @@ export default function InvoicesPage() {
                         </span>
                       </td>
                       <td style={{ padding: "16px 16px" }}>
-                        <div style={{ fontSize: 13, color: "#9ca3af" }}>{inv.date}</div>
-                        <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2, fontWeight: 500 }}>
+                        <div style={{ fontSize: 13, color: "var(--text-primary)" }}>{inv.date}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, fontWeight: 500 }}>
                           {inv.note}
                         </div>
                       </td>
@@ -455,7 +458,7 @@ export default function InvoicesPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/invoice/${inv._id}`);
+                              navigate(`/invoice/view/${inv._id}`);
                             }}
                             style={{
                               width: 30, height: 30, borderRadius: 8,
@@ -467,6 +470,22 @@ export default function InvoicesPage() {
                             title="View Invoice"
                           >
                             👁
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/invoice/edit/${inv._id}`);
+                            }}
+                            style={{
+                              width: 30, height: 30, borderRadius: 8,
+                              background: "rgba(245,158,11,.08)",
+                              border: "1px solid rgba(245,158,11,.2)",
+                              color: "#f59e0b", cursor: "pointer", fontSize: 14,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
+                            title="Edit Invoice"
+                          >
+                            ✎
                           </button>
                           <button
                             onClick={(e) => {
@@ -501,7 +520,7 @@ export default function InvoicesPage() {
                 display: "flex", alignItems: "center", justifyContent: "space-between",
               }}
             >
-              <span style={{ fontSize: 13, color: "#4b5563" }}>
+              <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
                 Showing <strong style={{ color: "#818cf8" }}>{filtered.length}</strong> of{" "}
                 <strong style={{ color: "#818cf8" }}>{invoices.length}</strong> invoices
               </span>
@@ -513,7 +532,7 @@ export default function InvoicesPage() {
                       width: 32, height: 32, borderRadius: 8,
                       background: p === "1" ? "linear-gradient(135deg,#6366f1,#818cf8)" : "rgba(99,102,241,.06)",
                       border: `1px solid ${p === "1" ? "transparent" : "rgba(99,102,241,.15)"}`,
-                      color: p === "1" ? "#fff" : "#6b7280",
+                      color: p === "1" ? "#fff" : "var(--text-muted)",
                       cursor: "pointer", fontSize: 13, fontWeight: p === "1" ? 600 : 400,
                     }}
                   >
