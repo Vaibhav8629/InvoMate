@@ -183,6 +183,68 @@ export default function InvoicesPage() {
     navigate("/login");
   };
 
+  const handleExportCSV = () => {
+    if (!invoices || invoices.length === 0) {
+      alert("No invoices available to export");
+      return;
+    }
+
+    const headers = [
+      "Invoice ID",
+      "Customer Name",
+      "Customer Email",
+      "Customer Phone",
+      "Amount (₹)",
+      "Profit (₹)",
+      "Payment Method",
+      "Date",
+      "Note"
+    ];
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return '';
+      let str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        str = '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+
+    const rows = filtered.map((inv) => [
+      inv.id || '',
+      inv.customer || '',
+      inv.email || '',
+      inv.phone || '',
+      inv.amount || 0,
+      inv.profit || 0,
+      inv.method || '',
+      inv.date || '',
+      inv.note || ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(escapeCsv).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `invoices-report-${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)" }}>
@@ -263,11 +325,14 @@ export default function InvoicesPage() {
               {theme === "dark" ? "☀️" : "🌙"}
             </div>
             <button
+              disabled
               style={{
                 background: "linear-gradient(135deg,#6366f1,#818cf8)",
                 border: "none", borderRadius: 10,
                 color: "#fff", padding: "8px 18px",
-                fontSize: 13, fontWeight: 600, cursor: "pointer",
+                fontSize: 13, fontWeight: 600, cursor: "not-allowed",
+                opacity: 0.55,
+                pointerEvents: "none",
               }}
             >
               Upgrade Plan
@@ -284,6 +349,7 @@ export default function InvoicesPage() {
             </div>
             <div style={{ display: "flex", gap: 12 }}>
               <button
+                onClick={handleExportCSV}
                 style={{
                   background: "rgba(99,102,241,.08)",
                   border: "1px solid rgba(99,102,241,.25)",

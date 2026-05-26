@@ -183,8 +183,18 @@ export default function SignUp() {
                   <ReceiptLongOutlinedIcon sx={{ color: '#fff', fontSize: 20 }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: '1.1rem', fontWeight: 900, color: theme.palette.text.primary }}>
-                    Invomate
+                  <Typography
+                    sx={{
+                      fontSize: '1.5rem',
+                      fontWeight: 900,
+                      lineHeight: 1,
+                      letterSpacing: '-0.06em',
+                      background: 'linear-gradient(135deg, #0f172a 0%, #4f46e5 55%, #06b6d4 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}
+                  >
+                    InvoMate
                   </Typography>
                   <Typography sx={{ fontSize: '0.7rem', color: theme.palette.text.secondary, fontWeight: 500 }}>
                     Billing made simple

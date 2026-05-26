@@ -772,11 +772,14 @@ export default function Home() {
               {theme === "dark" ? "☀️" : "🌙"}
             </div>
             <button
+              disabled
               style={{
                 background: "linear-gradient(135deg,#6366f1,#818cf8)",
                 border: "none", borderRadius: 10,
                 color: "#fff", padding: "8px 18px",
-                fontSize: 13, fontWeight: 600, cursor: "pointer",
+                fontSize: 13, fontWeight: 600, cursor: "not-allowed",
+                opacity: 0.55,
+                pointerEvents: "none",
               }}
             >
               Upgrade Plan

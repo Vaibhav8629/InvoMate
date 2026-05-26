@@ -106,6 +106,94 @@ export default function InvoiceView() {
   const tax = invoice.tax ?? 0;
   const total = invoice.total ?? 0;
 
+  const handleExportCSV = () => {
+    if (!invoice) return;
+
+    const headers = [
+      "Invoice Number",
+      "Invoice Date",
+      "Customer Name",
+      "Customer Phone",
+      "Payment Method",
+      "Item Sr. No.",
+      "Item Name",
+      "Item Code",
+      "HSN Code",
+      "Item Qty",
+      "Item Rate",
+      "Item Discount",
+      "Item GST %",
+      "Item Total Amount",
+      "Invoice Subtotal (Total Amount)",
+      "Invoice GST",
+      "Invoice Grand Total"
+    ];
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return '';
+      let str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        str = '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+
+    const itemsList = invoice.items || [];
+    
+    const rows = itemsList.map((item, idx) => {
+      const itemAmount = (item.qty * Number(item.price) - (item.discount || 0));
+      return [
+        invoice.invoiceNumber || '',
+        invoice.date || '',
+        invoice.customerName || '',
+        invoice.phone || '',
+        invoice.paymode || '',
+        idx + 1,
+        item.item || '',
+        item.item_code || '',
+        item.HSN || '',
+        item.qty || 0,
+        item.price || 0,
+        item.discount || 0,
+        item.GST || 0,
+        itemAmount,
+        subtotal,
+        tax,
+        total
+      ];
+    });
+
+    if (rows.length === 0) {
+      rows.push([
+        invoice.invoiceNumber || '',
+        invoice.date || '',
+        invoice.customerName || '',
+        invoice.phone || '',
+        invoice.paymode || '',
+        '', '', '', '', '', '', '', '', '',
+        subtotal,
+        tax,
+        total
+      ]);
+    }
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(escapeCsv).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `invoice-${invoice.invoiceNumber || id}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
   const payChip = {
     Cash:   { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0" },
     Online: { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE" },
@@ -663,6 +751,23 @@ export default function InvoiceView() {
             }}
           >
             Download PDF
+          </Button>
+          <Button
+            fullWidth
+            startIcon={<ReceiptOutlinedIcon sx={{ fontSize: "16px !important" }} />}
+            onClick={handleExportCSV}
+            sx={{
+              textTransform: "none", fontWeight: 700, fontSize: "0.82rem",
+              fontFamily: "'DM Sans', sans-serif",
+              borderRadius: "10px", height: 40,
+              background: "#F8FAFC",
+              color: "#475569",
+              border: "1px solid #E2E8F0",
+              "&:hover": { background: "#EFF6FF", color: "#2563EB", borderColor: "#BFDBFE" },
+              transition: "all 0.15s",
+            }}
+          >
+            Export CSV
           </Button>
         </Box>
       </Box>

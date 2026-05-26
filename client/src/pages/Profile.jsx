@@ -381,10 +381,10 @@ export default function ShopProfile() {
                           value={formData.ShopName}
                           onChange={(e) => handleInputChange("ShopName", e.target.value)}
                           placeholder="Enter shop name"
-                          className="text-xl font-bold text-white bg-transparent border-b border-violet-500/50 outline-none focus:border-violet-500 px-2 py-1"
+                          className="text-xl font-bold text-gray-100 bg-transparent border-b border-violet-500/50 outline-none focus:border-violet-500 px-2 py-1"
                         />
                       ) : (
-                        <h2 className="text-xl font-bold text-white">
+                        <h2 className="text-xl font-bold text-gray-100">
                           {formData.ShopName || <span className="text-gray-600 italic">Shop Name</span>}
                         </h2>
                       )}
@@ -540,7 +540,7 @@ export default function ShopProfile() {
 
                   <div className="rounded-xl border p-4 flex flex-col gap-3" style={surfaceMutedStyle}>
                     <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Upload / replace</p>
-                    <label className="cursor-pointer rounded-lg border border-violet-500/30 bg-violet-600/10 px-4 py-3 text-sm font-semibold text-violet-200 hover:bg-violet-600/20 transition-colors">
+                    <label className="cursor-pointer flex justify-center rounded-lg border border-violet-500/30 bg-violet-600/10 px-4 py-3 text-sm font-semibold text-[var(--accent)] hover:bg-violet-600/20 transition-colors">
                       {signatureLoading ? "Uploading..." : "Choose image"}
                       <input type="file" accept="image/*" className="hidden" onChange={handleSignatureUpload} disabled={signatureLoading} />
                     </label>

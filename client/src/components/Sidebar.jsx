@@ -48,14 +48,21 @@ export default function Sidebar({ onLogout }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div
             style={{
-              fontSize: 20,
-              fontWeight: 700,
-              background: "linear-gradient(135deg,#818cf8,#6366f1)",
+              display: "flex",
+              alignItems: "baseline",
+              gap: 2,
+              fontSize: 26,
+              fontWeight: 900,
+              letterSpacing: "-0.05em",
+              lineHeight: 1,
+              background: "linear-gradient(135deg,#e0e7ff 0%,#818cf8 45%,#4f46e5 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
+              textShadow: "0 10px 24px rgba(79,70,229,.18)",
             }}
           >
-            InvoMate
+            <span>Invo</span>
+            <span style={{ transform: "translateY(-1px)" }}>Mate</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {user?._id && (

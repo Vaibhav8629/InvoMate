@@ -357,6 +357,66 @@ export default function InventoryManagement() {
     navigate("/login");
   };
 
+  const handleExportCSV = () => {
+    if (!products || products.length === 0) {
+      alert("No products available to export");
+      return;
+    }
+
+    const headers = [
+      "Sr. No.",
+      "Item Code",
+      "Product Name",
+      "HSN Code",
+      "Category",
+      "Price",
+      "GST %",
+      "Stock Quantity"
+    ];
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return '';
+      let str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        str = '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+
+    const rows = products.map((product, idx) => [
+      idx + 1,
+      product.item_code || '',
+      product.item || '',
+      product.HSN || '',
+      product.category || '',
+      product.price || 0,
+      product.GST || 0,
+      product.Stock || 0
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(escapeCsv).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `products-report-${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div
       className="min-h-screen"
@@ -393,6 +453,7 @@ export default function InventoryManagement() {
             {/* Bell */}
             {/* Export */}
             <button
+              onClick={handleExportCSV}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-violet-500/30 text-violet-300 text-sm font-semibold hover:bg-violet-600/20 transition-colors"
               style={{ background: "var(--surface-2)" }}
             >

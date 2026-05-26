@@ -15,6 +15,7 @@ import Invoices from './pages/InvoiceList';
 import InvoiceView from "./pages/InvoiceView";
 import NotFound404 from './pages/404Page';
 import GSTReportsPage from './pages/GSTReports';
+import LandingPage from './pages/LandingPage';
 import { useThemeMode } from "./store/theme";
 
 const App = () => {
@@ -62,7 +63,7 @@ const App = () => {
       <CssBaseline enableColorScheme />
       <BrowserRouter>
         <Routes>
-          <Route path='/' element={<ProtectedRoute><Navigate to="/home"/></ProtectedRoute>} />
+          <Route path='/' element={<LandingPage/>} />
           <Route path='/register' element={<SignUp />} />
           <Route path='/login' element={<SignIn />} />
           <Route path='/products' element={<ProtectedRoute><BasicTextFields /></ProtectedRoute>} />

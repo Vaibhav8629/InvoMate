@@ -1,93 +1,124 @@
- 💳 **INVOMATE** – Smart Billing Platform
+# 💳 INVOMATE – Smart Billing Platform
 
-Modern Invoice & Business Management Platform built with the MERN Stack.
+Modern Invoice & Business Management Platform built using the MERN Stack.
 
-InvoMate helps businesses manage invoices, customers, billing workflows, and reports with a clean, modern, and efficient interface.
+InvoMate helps businesses manage invoices, customers, inventory, GST reports, analytics, and billing workflows through a clean, modern, and efficient interface.
 
-✨ Features:
+---
 
-🧾 Invoice Creation & Management
+## ✨ Features
 
-📊 Dashboard Analytics
+* 🧾 Invoice Creation & Management
+* 📊 Dashboard Analytics & Insights
+* 📁 CSV & Report Generation
+* 🏷️ Barcode Scan Billing
+* 📦 Inventory Management
+* 📱 WhatsApp Invoice Sharing
+* 🔐 JWT Authentication & Authorization
+* ✍️ Invoice Authentication Signature
+* ☁️ Cloudinary Signature Uploads
+* 📈 GST Report Generation
+* 📱 Fully Responsive UI
 
-💳 Subscription-Based Access
+---
 
-📁 Report Generation
+## 🛠️ Tech Stack
 
-🔐 JWT Authentication & Authorization
+### 🎨 Frontend
 
-☁️ Cloudinary Signatures Uploads
+* React
+* Tailwind CSS
+* Axios
+* React Router DOM
 
-📱 Fully Responsive UI
+### ⚙️ Backend
 
+* Node.js
+* Express.js
+* JWT Authentication
 
-🛠️ Tech Stack:
+### 💾 Database & Cloud
 
-🎨 Frontend - React, Tailwind CSS
+* MongoDB
+* Cloudinary
 
-⚙️ Backend  - Node.js, Express.js, JWT Authentication
+---
 
-💾 Databse  - MongoDB, Cloudinary 
+## 📂 Project Structure
 
-
-📂 Project Structure:
 ```bash
-    InvoMate/
+InvoMate/
 │
-├── client/     # Frontend (React + Vite)
-│
-├── server/     # Backend (Node.js + Express)
-│
+├── client/        # Frontend (React + Vite)
+├── server/        # Backend (Node.js + Express)
 └── README.md
 ```
 
+---
 
-📥 Clone Repository:
+## 📥 Clone Repository
+
 ```bash
 git clone https://github.com/Vaibhav8629/InvoMate.git
+
 cd InvoMate
 ```
 
+---
 
-🎨 Frontend Setup:
-```bash
-cd client           #Go to the client folder
-npm install         #Install dependencies
-npm run dev         #Start the frontend
-```
-
-=>Create a .env file inside client
+## 🎨 Frontend Setup
 
 ```bash
-VITE_API_URL=       
+cd client
+
+npm install
+
+npm run dev
 ```
 
+Create a `.env` file inside the `client` folder:
 
-⚙️ Backend Setup:
 ```bash
-cd server           #Go to the server folder
-npm install         #Install dependencies
-npm run dev         #Start the backend
+VITE_API_URL=
 ```
 
-=>Create a .env file inside server
+---
+
+## ⚙️ Backend Setup
+
+```bash
+cd server
+
+npm install
+
+npm run dev
+```
+
+Create a `.env` file inside the `server` folder:
 
 ```bash
 MONGODB_URI=
+
 PORT=
+
 JWT_SIGN=
+
 CLOUDINARY_API_SECRET=
+
 CLOUDINARY_API_KEY=
+
 CLOUDINARY_CLOUD_NAME=
 ```
 
+---
 
-🌟 Future Improvements:
+## 🌟 Future Improvements
 
-📄 CSV Export Support
+* 📧 Email Invoice Delivery
+* 🤖 AI-Based Sales Insights
+* 📊 Advanced Business Analytics
+* ☁️ Cloud Backup & Sync
+* 🧾 Multi-Template Invoice System
+* 🌍 Multi-Language Support
 
-🧾 GST Report Generation
-
-📊 Advanced Analytics
-
-📧 Email Invoice Delivery
+---
