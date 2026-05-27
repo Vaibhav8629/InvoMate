@@ -276,15 +276,6 @@ export default function ShopProfile() {
     }
   };
 
-  const getInitials = (name) => {
-    if (!name) return "??";
-    const parts = name.split(" ");
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
   const getLastValidatedText = () => {
     // You can implement actual validation date logic here
     return "Last validated: Recently";
@@ -305,8 +296,8 @@ export default function ShopProfile() {
           style={{ background: "var(--surface)", borderColor: "var(--border-subtle)" }}
         >
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Shop Profile</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Manage your workspace identity and billing details</p>
+            <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Shop Profile</h1>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>Manage your workspace identity and billing details</p>
           </div>
           <div className="flex gap-3">
             {isEditing ? (

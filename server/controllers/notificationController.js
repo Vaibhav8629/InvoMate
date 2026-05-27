@@ -67,16 +67,14 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// Mark a notification as read
+// Delete a notification after it has been viewed
 const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
 
-    const notification = await Notification.findOneAndUpdate(
+    const notification = await Notification.findOneAndDelete(
       { _id: id, userId },
-      { isRead: true },
-      { new: true }
     );
 
     if (!notification) {
@@ -91,33 +89,31 @@ const markAsRead = async (req, res) => {
       data: notification
     });
   } catch (error) {
-    console.error("Error marking notification as read:", error);
+    console.error("Error deleting notification:", error);
     res.status(500).json({
       success: false,
-      message: "Server error while updating notification"
+      message: "Server error while deleting notification"
     });
   }
 };
 
-// Mark all notifications as read
+// Delete all notifications for the user
 const markAllAsRead = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    await Notification.updateMany(
-      { userId, isRead: false },
-      { isRead: true }
-    );
+    const result = await Notification.deleteMany({ userId });
 
     res.status(200).json({
       success: true,
-      message: "All notifications marked as read"
+      deletedCount: result.deletedCount,
+      message: "All notifications cleared"
     });
   } catch (error) {
-    console.error("Error marking all notifications as read:", error);
+    console.error("Error clearing all notifications:", error);
     res.status(500).json({
       success: false,
-      message: "Server error while updating notifications"
+      message: "Server error while clearing notifications"
     });
   }
 };
@@ -145,31 +141,10 @@ const getUnreadCount = async (req, res) => {
   }
 };
 
-// Clear all notifications for the user
-const clearAllNotifications = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    await Notification.deleteMany({ userId });
-
-    res.status(200).json({
-      success: true,
-      message: "All notifications cleared"
-    });
-  } catch (error) {
-    console.error("Error clearing notifications:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while clearing notifications"
-    });
-  }
-};
-
 module.exports = {
   createNotification,
   getNotifications,
   markAsRead,
   markAllAsRead,
-  getUnreadCount,
-  clearAllNotifications
+  getUnreadCount
 };

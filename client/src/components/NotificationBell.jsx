@@ -25,8 +25,7 @@ import socketService from "../services/socket";
 import {
   getNotifications,
   markNotificationAsRead,
-  markAllNotificationsAsRead,
-  clearAllNotifications
+  markAllNotificationsAsRead
 } from "../services/notificationApi";
 
 const NotificationBell = ({ userId }) => {
@@ -40,7 +39,16 @@ const NotificationBell = ({ userId }) => {
 
   // Fetch notifications on mount
   useEffect(() => {
-    fetchNotifications();
+    void getNotifications(20)
+      .then((response) => {
+        if (response.success) {
+          setNotifications(response.data);
+          setUnreadCount(response.unreadCount);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching notifications:", error);
+      });
   }, []);
 
   // Setup socket connection
@@ -65,18 +73,6 @@ const NotificationBell = ({ userId }) => {
     }
   }, [userId]);
 
-  const fetchNotifications = async () => {
-    try {
-      const response = await getNotifications(20);
-      if (response.success) {
-        setNotifications(response.data);
-        setUnreadCount(response.unreadCount);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
-
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -87,14 +83,11 @@ const NotificationBell = ({ userId }) => {
 
   const handleNotificationClick = async (notification) => {
     try {
-      // Mark as read
+      // Mark as read and remove it from the database
+      await markNotificationAsRead(notification._id);
+      setNotifications((prev) => prev.filter((n) => n._id !== notification._id));
+
       if (!notification.isRead) {
-        await markNotificationAsRead(notification._id);
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n._id === notification._id ? { ...n, isRead: true } : n
-          )
-        );
         setUnreadCount((prev) => Math.max(0, prev - 1));
       }
 
@@ -109,23 +102,11 @@ const NotificationBell = ({ userId }) => {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllNotificationsAsRead();
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, isRead: true }))
-      );
-      setUnreadCount(0);
-    } catch (error) {
-      console.error("Error marking all as read:", error);
-    }
-  };
-
-  const handleClearAll = async () => {
-    try {
-      await clearAllNotifications();
       setNotifications([]);
       setUnreadCount(0);
       handleClose();
     } catch (error) {
-      console.error("Error clearing notifications:", error);
+      console.error("Error marking all as read:", error);
     }
   };
 
@@ -228,22 +209,6 @@ const NotificationBell = ({ userId }) => {
                 Mark all read
               </Button>
             )}
-            {notifications.length > 0 && (
-              <Button
-                size="small"
-                onClick={handleClearAll}
-                sx={{
-                  color: "white",
-                  textTransform: "none",
-                  fontSize: "0.75rem",
-                  "&:hover": {
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }
-                }}
-              >
-                Clear all
-              </Button>
-            )}
           </Box>
         </Box>
 
@@ -264,7 +229,7 @@ const NotificationBell = ({ userId }) => {
               <Typography variant="body2">No notifications yet</Typography>
             </Box>
           ) : (
-            notifications.map((notification, index) => (
+            notifications.map((notification) => (
               <MenuItem
                 key={notification._id}
                 onClick={() => handleNotificationClick(notification)}

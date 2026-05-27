@@ -16,6 +16,7 @@ import {
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
 import { useAuth } from "../store/auth";
 import { useThemeMode } from "../store/theme";
+import { CardMotion, RevealOnScroll } from "../components/MotionPrimitives";
 
 const GST_REPORT_PAGE_STYLES = `
   .gst-report-page {
@@ -142,7 +143,7 @@ const formatDate = (value) => {
 };
 
 const StatCard = ({ label, value, accent, icon }) => (
-  <div
+  <CardMotion
     style={{
       background: "linear-gradient(135deg,var(--surface) 0%, var(--surface-2) 100%)",
       border: "1px solid var(--border-subtle)",
@@ -169,7 +170,7 @@ const StatCard = ({ label, value, accent, icon }) => (
       <span style={{ color: accent, fontSize: 18 }}>{icon}</span>
     </div>
     <div style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: 24, fontVariantNumeric: "tabular-nums" }}>{value}</div>
-  </div>
+  </CardMotion>
 );
 
 const buildQuery = (filters) => {
@@ -498,6 +499,7 @@ export default function GSTReportsPage() {
             <p className="gst-card-subtext" style={{ marginTop: 6, marginBottom: 0, fontSize: 13, color: "var(--text-muted)" }}>Snapshot totals derived from invoice GST entries.</p>
           </div>
 
+          <RevealOnScroll>
           <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(4,minmax(180px,1fr))", marginBottom: 28 }}>
             <StatCard label="Total Revenue" value={report.formatted?.totalRevenue || formatCurrency(report.totalRevenue)} accent="#6366f1" icon="💰" />
             <StatCard label="Taxable Amount" value={report.formatted?.totalTaxableAmount || formatCurrency(report.totalTaxableAmount)} accent="#10b981" icon="📊" />
@@ -507,7 +509,9 @@ export default function GSTReportsPage() {
             <StatCard label="SGST Total" value={report.formatted?.sgstTotal || formatCurrency(report.sgstTotal)} accent="#10b981" icon="S" />
             <StatCard label="IGST Total" value={report.formatted?.igstTotal || formatCurrency(report.igstTotal)} accent="#f59e0b" icon="I" />
           </div>
+          </RevealOnScroll>
 
+          <RevealOnScroll>
           <div className="gst-charts-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr)", gap: 16, marginBottom: 20 }}>
             <div className="gst-chart-card" style={{ minWidth: 0, background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 14, padding: 16 }}>
               <div style={{ marginBottom: 10, fontSize: 14, color: "var(--text-primary)", fontWeight: 600 }}>Monthly GST Trend</div>
@@ -544,6 +548,7 @@ export default function GSTReportsPage() {
               </div>
             </div>
           </div>
+          </RevealOnScroll>
 
           <div style={{ marginBottom: 12 }}>
             <h2 className="gst-card-title" style={{ margin: 0, fontSize: 18, color: "var(--text-primary)", fontWeight: 700 }}>Invoice Breakdown</h2>
@@ -590,7 +595,7 @@ export default function GSTReportsPage() {
                     const badgeStyle = getGstTypeStyle(gstType);
 
                     return (
-                    <tr key={invoice.invoiceId} style={{ borderBottom: "1px solid rgba(99,102,241,.08)" }}>
+                    <tr key={invoice.invoiceId} style={{ borderBottom: "1px solid rgba(99,102,241,.08)", transition: "background-color 180ms ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(99,102,241,.06)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                       <td style={{ padding: "12px 14px", color: "#818cf8", fontFamily: "monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {invoice.invoiceNumber || String(invoice.invoiceId).slice(-6)}
                       </td>

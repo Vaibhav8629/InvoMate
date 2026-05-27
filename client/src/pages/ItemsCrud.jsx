@@ -165,6 +165,7 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
 export default function InventoryManagement() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
+  const gstOptions = [0, 5, 18, 40];
   const [search, setSearch] = useState("");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -622,16 +623,21 @@ export default function InventoryManagement() {
                   <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">
                     GST (%)
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <select
                     value={formData.GST}
                     onChange={handleFormChange("GST")}
-                    placeholder="18"
                     className="w-full rounded-lg px-3 py-2 text-sm placeholder-gray-600 outline-none focus:border-violet-500/60"
                     style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
-                  />
+                  >
+                    <option value="" disabled>
+                      Select GST
+                    </option>
+                    {gstOptions.map((rate) => (
+                      <option key={rate} value={rate}>
+                        {rate}%
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-1">

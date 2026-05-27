@@ -2,6 +2,9 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
 import NotificationBell from "./NotificationBell";
+import { FileText } from "lucide-react";
+import { motion } from "framer-motion";
+import { transitions } from "../animations/motionSystem";
 
 export const SIDEBAR_WIDTH = 220;
 
@@ -26,7 +29,10 @@ export default function Sidebar({ onLogout }) {
   const ownerName = user?.username || "";
 
   return (
-    <aside
+    <motion.aside
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={transitions.smooth}
       style={{
         width: SIDEBAR_WIDTH,
         flexShrink: 0,
@@ -49,20 +55,32 @@ export default function Sidebar({ onLogout }) {
           <div
             style={{
               display: "flex",
-              alignItems: "baseline",
-              gap: 2,
-              fontSize: 26,
-              fontWeight: 900,
-              letterSpacing: "-0.05em",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 24,
+              fontWeight: 800,
+              letterSpacing: "-0.04em",
               lineHeight: 1,
-              background: "linear-gradient(135deg,#e0e7ff 0%,#818cf8 45%,#4f46e5 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              textShadow: "0 10px 24px rgba(79,70,229,.18)",
+              color: "var(--text-primary)",
             }}
           >
-            <span>Invo</span>
-            <span style={{ transform: "translateY(-1px)" }}>Mate</span>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 10,
+                background: "var(--accent)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <FileText size={18} color="#fff" />
+            </div>
+            <span>
+              Invo<span style={{ color: "var(--accent)" }}>Mate</span>
+            </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {user?._id && (
@@ -78,9 +96,12 @@ export default function Sidebar({ onLogout }) {
         {NAV_ITEMS.map((item) => {
           const active = isActivePath(pathname, item.path);
           return (
-            <div
+            <motion.div
               key={item.label}
               onClick={() => navigate(item.path)}
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.98 }}
+              transition={transitions.fast}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -94,11 +115,25 @@ export default function Sidebar({ onLogout }) {
                 fontSize: 14,
                 fontWeight: active ? 600 : 400,
                 borderLeft: active ? "2px solid #6366f1" : "2px solid transparent",
+                position: "relative",
               }}
             >
+              {active ? (
+                <motion.span
+                  layoutId="sidebar-active-indicator"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 10,
+                    background: "rgba(99,102,241,.12)",
+                    zIndex: 0,
+                  }}
+                  transition={transitions.normal}
+                />
+              ) : null}
               <span style={{ fontSize: 16 }}>{item.icon}</span>
-              {item.label}
-            </div>
+              <span style={{ position: "relative", zIndex: 1 }}>{item.label}</span>
+            </motion.div>
           );
         })}
       </nav>
@@ -141,6 +176,6 @@ export default function Sidebar({ onLogout }) {
           </div>
         </div>
       ) : null}
-    </aside>
+    </motion.aside>
   );
 }

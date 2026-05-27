@@ -2,6 +2,7 @@ const Invoice = require("../models/Invoice");
 const Product = require("../models/Product");
 const mongoose = require("mongoose");
 const { computeInvoiceGST } = require("../services/gstService");
+const { resolveInvoicePaymentDetails } = require("../utils/invoicePayment");
 
 const buildInvoiceSnapshot = async (req, items, existingInvoice = null) => {
   const incomingItems = Array.isArray(items) ? items : [];
@@ -42,11 +43,13 @@ const saveInvoice = async (req, res) => {
       date, 
       time,
       phone,
+      paymentStatus,
       paymode,
       profit,
       templateId = "classic"
     } = req.body;
     const gstSnapshot = await buildInvoiceSnapshot(req, items);
+    const paymentDetails = resolveInvoicePaymentDetails({ paymentStatus, paymode });
 
     const invoice = await Invoice.create({
       user: req.user.id,   
@@ -64,7 +67,8 @@ const saveInvoice = async (req, res) => {
       date, 
       time,
       phone,
-      paymode,
+      paymentStatus: paymentDetails.paymentStatus,
+      paymode: paymentDetails.paymode,
       profit
     });
 
@@ -107,12 +111,18 @@ const updateInvoice = async (req, res) => {
       date,
       time,
       phone,
+      paymentStatus,
       paymode,
       profit,
       templateId = existingInvoice.templateId || "classic"
     } = req.body;
 
     const gstSnapshot = await buildInvoiceSnapshot(req, items || existingInvoice.items, existingInvoice);
+    const paymentDetails = resolveInvoicePaymentDetails({
+      paymentStatus,
+      paymode,
+      existingInvoice,
+    });
 
     const updatedInvoice = await Invoice.findByIdAndUpdate(
       invoiceId,
@@ -131,7 +141,8 @@ const updateInvoice = async (req, res) => {
         date,
         time,
         phone,
-        paymode,
+        paymentStatus: paymentDetails.paymentStatus,
+        paymode: paymentDetails.paymode,
         profit
       },
       { new: true }
@@ -191,4 +202,32 @@ const getInvoiceById = async (req, res) => {
   }
 };
 
-module.exports = { saveInvoice, updateInvoice, getInvoices, getInvoiceById };
+const deleteInvoice = async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+    const deletedInvoice = await Invoice.findOneAndDelete({
+      _id: invoiceId,
+      user: req.user._id,
+    });
+
+    if (!deletedInvoice) {
+      return res.status(404).json({
+        success: false,
+        message: "Invoice not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Invoice deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+module.exports = { saveInvoice, updateInvoice, getInvoices, getInvoiceById, deleteInvoice };

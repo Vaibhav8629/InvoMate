@@ -31,14 +31,14 @@ const notificationSchema = new mongoose.Schema({
   
   createdAt: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
   }
 });
 
 // Index for efficient queries
 notificationSchema.index({ userId: 1, createdAt: -1 });
 notificationSchema.index({ userId: 1, isRead: 1 });
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 });
 
 const Notification = mongoose.model("Notification", notificationSchema);
 

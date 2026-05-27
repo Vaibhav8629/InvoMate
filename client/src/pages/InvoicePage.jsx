@@ -5,7 +5,7 @@ import {
   Card, CardContent, Chip, InputAdornment, Stack, Paper,
   Dialog, DialogContent, DialogTitle, IconButton,
   FormControl, Select, MenuItem, Avatar,
-  useTheme,
+  useTheme, Fade, Grow,
 } from "@mui/material";
 
 import { Snackbar, Alert } from "@mui/material";
@@ -28,6 +28,7 @@ import html2canvas from "html2canvas";
 import Scanner from "../components/Scanner";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../store/auth";
+import { getInvoicePaymentStatus } from "../utils/invoicePayment";
 
 const InvoicePage = () => {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ const InvoicePage = () => {
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("PAID");
   const [paymentMode, setPaymentMode] = useState("");
   const [address, setAddress] = useState("");
   const [GST, setGST] = useState("");
@@ -54,6 +56,7 @@ const InvoicePage = () => {
   const [openSuccess, setOpenSuccess] = useState(false);
   const [templateId, setTemplateId] = useState("classic");
   const [originalItems, setOriginalItems] = useState([]);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const today = new Date();
   const time = new Date().toLocaleTimeString();
@@ -87,6 +90,12 @@ const InvoicePage = () => {
   };
 
   const handleLogout = () => { logoutUser(); navigate("/login"); };
+
+  useEffect(() => {
+    if (paymentStatus === "PENDING") {
+      setPaymentMode("");
+    }
+  }, [paymentStatus]);
 
   const openWhatsApp = (billNo) => {
     const message = encodeURIComponent(`Invoice ${billNo} is ready.`);
@@ -123,17 +132,35 @@ const InvoicePage = () => {
 
   const handleSaveBill = async () => {
     try {
+      if (paymentStatus === "PAID" && !paymentMode) {
+        setSnackbar({ open: true, message: "Select a payment mode for paid invoices.", severity: "error" });
+        return;
+      }
+
+      const invoicePayload = {
+        invoiceNumber: invoiceNum,
+        customerName,
+        shopName: name,
+        shopAddress: address,
+        shopGST: GST,
+        items: itemsBuy,
+        subtotal: Number(subtotal.toFixed(2)),
+        tax: Number(tax.toFixed(2)),
+        total: Number(totalAmt.toFixed(2)),
+        date: formattedDate,
+        time,
+        phone,
+        paymentStatus,
+        paymode: paymentStatus === "PAID" ? paymentMode : null,
+        profit,
+        templateId,
+      };
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth${isEditMode ? `/invoice/${id}` : "/saveinvoice"}`, {
         method: isEditMode ? "PUT" : "POST",
         credentials: 'include', // Enable cookies
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          invoiceNumber: invoiceNum, customerName, shopName: name,
-          shopAddress: address, shopGST: GST, items: itemsBuy,
-          subtotal: Number(subtotal.toFixed(2)), tax: Number(tax.toFixed(2)),
-          total: Number(totalAmt.toFixed(2)), date: formattedDate, time,
-          phone, paymode: paymentMode, profit, templateId,
-        }),
+        body: JSON.stringify(invoicePayload),
       });
       if (isEditMode) {
         const itemKey = (item) => String(item.productId || item._id || item.item_code || "");
@@ -186,9 +213,10 @@ const InvoicePage = () => {
         }
       }
       setInvoiceNum(""); setCustomerName(""); setPhone("");
-      setPaymentMode(""); setItemsBuy([]); setSubtotal(0);
+      setPaymentStatus("PAID"); setPaymentMode(""); setItemsBuy([]); setSubtotal(0);
       setTax(0); setTotalAmount(0); setTemplateId("classic"); setOriginalItems([]); setOpenSuccess(true);
-      if (isEditMode) navigate(`/invoice/view/${id}`);
+      setSnackbar({ open: true, message: "Invoice saved successfully!", severity: "success" });
+      if (isEditMode) navigate(`/invoice/${id}`);
     } catch (err) { console.error(err); }
   };
 
@@ -247,7 +275,9 @@ const InvoicePage = () => {
         setName(invoice.shopName || "");
         setAddress(invoice.shopAddress || "");
         setGST(invoice.shopGST || "");
-        setPaymentMode(invoice.paymode || "");
+        const existingPaymentStatus = getInvoicePaymentStatus(invoice);
+        setPaymentStatus(existingPaymentStatus);
+        setPaymentMode(existingPaymentStatus === "PENDING" ? "" : invoice.paymode || "");
         setTemplateId(invoice.templateId || "classic");
 
         const normalizedItems = Array.isArray(invoice.items) ? invoice.items.map((item) => ({
@@ -709,11 +739,43 @@ const InvoicePage = () => {
                     ))}
                     <Divider sx={{ borderColor: "#E8ECF0" }} />
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Typography sx={{ fontSize: "0.825rem", color: "#64748B" }}>Payment</Typography>
+                      <Typography sx={{ fontSize: "0.825rem", color: "#64748B" }}>Payment Status</Typography>
                       <FormControl size="small" sx={{ minWidth: 120 }}>
                         <Select
-                          value={paymentMode} displayEmpty
+                          value={paymentStatus}
+                          onChange={(e) => setPaymentStatus(e.target.value)}
+                          sx={{
+                            fontFamily: "'DM Sans', sans-serif", fontSize: "0.8rem", borderRadius: "8px",
+                            background: "#fff",
+                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E2E8F0" },
+                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#93C5FD" },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#2563EB" },
+                          }}
+                        >
+                          <MenuItem value="PAID" sx={{ fontFamily: "'DM Sans', sans-serif", fontSize: "0.8rem" }}>Paid</MenuItem>
+                          <MenuItem value="PENDING" sx={{ fontFamily: "'DM Sans', sans-serif", fontSize: "0.8rem" }}>Pending</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        minHeight: 40,
+                        opacity: paymentStatus === "PAID" ? 1 : 0,
+                        pointerEvents: paymentStatus === "PAID" ? "auto" : "none",
+                        transition: "opacity 180ms ease",
+                      }}
+                      aria-hidden={paymentStatus !== "PAID"}
+                    >
+                      <Typography sx={{ fontSize: "0.825rem", color: "#64748B" }}>Payment Mode</Typography>
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <Select
+                          value={paymentMode}
+                          displayEmpty
                           onChange={(e) => setPaymentMode(e.target.value)}
+                          disabled={paymentStatus !== "PAID"}
                           sx={{
                             fontFamily: "'DM Sans', sans-serif", fontSize: "0.8rem", borderRadius: "8px",
                             background: "#fff",
@@ -912,6 +974,8 @@ const InvoicePage = () => {
       <Dialog
         open={openScanner} onClose={() => setOpenScanner(false)}
         maxWidth="md" fullWidth
+        TransitionComponent={Grow}
+        transitionDuration={{ enter: 220, exit: 180 }}
         PaperProps={{
           sx: { borderRadius: "16px", border: "1px solid #E8ECF0", overflow: "hidden" },
         }}
@@ -948,22 +1012,31 @@ const InvoicePage = () => {
 
       {/* ── Success Snackbar ────────────────────────────────────────────────── */}
       <Snackbar
-        open={openSuccess} autoHideDuration={3000}
-        onClose={() => setOpenSuccess(false)}
+        open={openSuccess || snackbar.open}
+        autoHideDuration={3000}
+        TransitionComponent={Fade}
+        onClose={() => {
+          setOpenSuccess(false);
+          setSnackbar((prev) => ({ ...prev, open: false }));
+        }}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert
-          onClose={() => setOpenSuccess(false)}
+          onClose={() => {
+            setOpenSuccess(false);
+            setSnackbar((prev) => ({ ...prev, open: false }));
+          }}
+          severity={snackbar.severity === "error" ? "error" : "success"}
           icon={<CheckCircleIcon sx={{ fontSize: 18 }} />}
           sx={{
-            borderRadius: "12px", background: "#ECFDF5",
-            color: "#065F46", fontWeight: 600, fontSize: "0.875rem",
+            borderRadius: "12px", background: snackbar.severity === "error" ? "#FEF2F2" : "#ECFDF5",
+            color: snackbar.severity === "error" ? "#991B1B" : "#065F46", fontWeight: 600, fontSize: "0.875rem",
             fontFamily: "'DM Sans', sans-serif",
-            border: "1px solid #A7F3D0",
-            boxShadow: "0 8px 24px rgba(16,185,129,0.2)",
+            border: snackbar.severity === "error" ? "1px solid #FCA5A5" : "1px solid #A7F3D0",
+            boxShadow: snackbar.severity === "error" ? "0 8px 24px rgba(239,68,68,0.18)" : "0 8px 24px rgba(16,185,129,0.2)",
           }}
         >
-          Invoice saved successfully!
+          {snackbar.message || "Invoice saved successfully!"}
         </Alert>
       </Snackbar>
     </Box>

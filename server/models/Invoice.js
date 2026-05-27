@@ -58,6 +58,11 @@ const invoiceSchema = new mongoose.Schema({
   date: String,
   time: String,
   phone:Number,
+  paymentStatus: {
+    type: String,
+    enum: ["PAID", "PENDING"],
+    default: "PAID"
+  },
   paymode: String,
   profit: Number
 

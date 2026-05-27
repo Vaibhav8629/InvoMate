@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { createTheme, ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import { AnimatePresence } from "framer-motion";
 import ProtectedRoute from './components/ProtectedRoute';
+import { PageMotion } from './components/MotionPrimitives';
 
 import baseMuiTheme from './theme/theme';
 import SignUp from './pages/Register';
@@ -17,6 +19,31 @@ import NotFound404 from './pages/404Page';
 import GSTReportsPage from './pages/GSTReports';
 import LandingPage from './pages/LandingPage';
 import { useThemeMode } from "./store/theme";
+
+const TransitionRoutes = () => {
+  const location = useLocation();
+
+  const withPageTransition = (element) => <PageMotion>{element}</PageMotion>;
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path='/' element={withPageTransition(<LandingPage />)} />
+        <Route path='/register' element={withPageTransition(<SignUp />)} />
+        <Route path='/login' element={withPageTransition(<SignIn />)} />
+        <Route path='/products' element={withPageTransition(<ProtectedRoute><BasicTextFields /></ProtectedRoute>)} />
+        <Route path='/profile' element={withPageTransition(<ProtectedRoute><Profile /></ProtectedRoute>)} />
+        <Route path='/home' element={withPageTransition(<ProtectedRoute><Dashboard /></ProtectedRoute>)} />
+        <Route path='/invoice/create' element={withPageTransition(<ProtectedRoute><InvoicePage /></ProtectedRoute>)} />
+        <Route path='/invoice/edit/:id' element={withPageTransition(<ProtectedRoute><InvoicePage /></ProtectedRoute>)} />
+        <Route path='/invoices' element={withPageTransition(<ProtectedRoute><Invoices /></ProtectedRoute>)} />
+        <Route path='/gst-reports' element={withPageTransition(<ProtectedRoute><GSTReportsPage /></ProtectedRoute>)} />
+        <Route path="/invoice/:id" element={withPageTransition(<ProtectedRoute><InvoiceView /></ProtectedRoute>)} />
+        <Route path='*' element={withPageTransition(<NotFound404 />)} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
 
 const App = () => {
   const { theme } = useThemeMode();
@@ -62,21 +89,7 @@ const App = () => {
     <MuiThemeProvider theme={muiTheme}>
       <CssBaseline enableColorScheme />
       <BrowserRouter>
-        <Routes>
-          <Route path='/' element={<LandingPage/>} />
-          <Route path='/register' element={<SignUp />} />
-          <Route path='/login' element={<SignIn />} />
-          <Route path='/products' element={<ProtectedRoute><BasicTextFields /></ProtectedRoute>} />
-          <Route path='/profile' element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path='/home' element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path='/createbill' element={<ProtectedRoute><InvoicePage /></ProtectedRoute>} />
-          <Route path='/invoice/create' element={<ProtectedRoute><InvoicePage /></ProtectedRoute>} />
-          <Route path='/invoice/edit/:id' element={<ProtectedRoute><InvoicePage /></ProtectedRoute>} />
-          <Route path='/invoices' element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
-          <Route path='/gst-reports' element={<ProtectedRoute><GSTReportsPage /></ProtectedRoute>} />
-          <Route path="/invoice/:id" element={<ProtectedRoute><InvoiceView /></ProtectedRoute>} />
-          <Route path='*' element={<NotFound404 />} />
-        </Routes>
+        <TransitionRoutes />
       </BrowserRouter>
     </MuiThemeProvider>
   );

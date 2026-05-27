@@ -21,6 +21,7 @@ import NotFound404 from './404Page';
 import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../store/auth';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 export default function SignUp() {
   const theme = useTheme();
@@ -135,6 +136,11 @@ export default function SignUp() {
       <>
         <CssBaseline enableColorScheme />
 
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
         <Box
           sx={{
             minHeight: '100vh',
@@ -292,33 +298,35 @@ export default function SignUp() {
                   />
                 </FormControl>
 
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  onClick={validateInputs}
-                  endIcon={<ArrowForwardIcon />}
-                  sx={{
-                    mt: '6px',
-                    background: theme.palette.primary.main,
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '0.9375rem',
-                    textTransform: 'none',
-                    borderRadius: '12px',
-                    py: '12px',
-                    boxShadow: '0 4px 16px rgba(27,110,243,0.35)',
-                    transition: 'all 0.18s ease',
-                    '&:hover': {
-                      background: theme.palette.primary.dark,
-                      boxShadow: '0 6px 22px rgba(27,110,243,0.45)',
-                      transform: 'translateY(-1px)',
-                    },
-                    '&:active': { transform: 'translateY(0)' },
-                  }}
-                >
-                  Create Account
-                </Button>
+                <motion.div whileHover={{ scale: 1.012, y: -1 }} whileTap={{ scale: 0.985 }}>
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    onClick={validateInputs}
+                    endIcon={<ArrowForwardIcon />}
+                    sx={{
+                      mt: '6px',
+                      background: theme.palette.primary.main,
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '0.9375rem',
+                      textTransform: 'none',
+                      borderRadius: '12px',
+                      py: '12px',
+                      boxShadow: '0 4px 16px rgba(27,110,243,0.35)',
+                      transition: 'all 0.18s ease',
+                      '&:hover': {
+                        background: theme.palette.primary.dark,
+                        boxShadow: '0 6px 22px rgba(27,110,243,0.45)',
+                        transform: 'translateY(-1px)',
+                      },
+                      '&:active': { transform: 'translateY(0)' },
+                    }}
+                  >
+                    Create Account
+                  </Button>
+                </motion.div>
               </Box>
 
               {/* Divider */}
@@ -351,6 +359,7 @@ export default function SignUp() {
             © 2025 Invomate · Billing made simple for local businesses
           </Typography>
         </Box>
+        </motion.div>
       </>
     );
   } else {

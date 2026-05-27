@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
 import { useThemeMode } from "../store/theme";
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
+import { getInvoicePaymentDisplay } from "../utils/invoicePayment";
+import { motion } from "framer-motion";
+import { CardMotion, RevealOnScroll } from "../components/MotionPrimitives";
 
 /* ─── Manual CSS injected once ─────────────────────────────────────────── */
 const STYLES = `
@@ -184,9 +187,9 @@ const STYLES = `
     border: 1px solid var(--border);
     border-radius: 14px; padding: 16px 18px;
     display: flex; flex-direction: column; gap: 6px;
-    transition: border-color .2s;
+    transition: border-color .2s, transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s cubic-bezier(.22,1,.36,1);
   }
-  .stat-card:hover { border-color: var(--border-active); }
+  .stat-card:hover { border-color: var(--border-active); transform: translateY(-2px) scale(1.01); box-shadow: 0 14px 26px rgba(15,23,42,.14); }
   .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); }
   .stat-icon { font-size: 15px; }
   .stat-value { font-size: 26px; font-weight: 700; line-height: 1.1; font-family: 'JetBrains Mono', monospace; }
@@ -199,7 +202,9 @@ const STYLES = `
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 14px; padding: 22px 22px 14px;
+    transition: transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s cubic-bezier(.22,1,.36,1);
   }
+  .chart-card:hover { transform: translateY(-2px); box-shadow: 0 16px 30px rgba(15,23,42,.12); }
   .live-badge {
     background: rgba(0,229,160,0.12);
     color: var(--green); font-size: 9px; font-weight: 700;
@@ -219,7 +224,9 @@ const STYLES = `
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 14px; padding: 20px 20px 16px;
+    transition: transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s cubic-bezier(.22,1,.36,1);
   }
+  .inv-card:hover { transform: translateY(-2px); box-shadow: 0 16px 30px rgba(15,23,42,.12); }
   .inv-row { padding: 10px 0; border-bottom: 1px solid var(--border); }
   .inv-row:last-child { border-bottom: none; }
   .inv-name { font-size: 13px; font-weight: 500; }
@@ -451,9 +458,12 @@ function ProfitChart({ invoices }) {
             stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
         ))}
         {/* area fill */}
-        <path d={areaPath} fill="url(#areaGrad)" />
+        <motion.path d={areaPath} fill="url(#areaGrad)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.42 }} />
         {/* line */}
-        <path d={linePath} fill="none" stroke="var(--chart-stroke)" strokeWidth="2"
+        <motion.path d={linePath} fill="none" stroke="var(--chart-stroke)" strokeWidth="2"
+          initial={{ pathLength: 0, opacity: 0.4 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           filter="url(#glow)" strokeLinejoin="round" strokeLinecap="round" />
         {/* last point dot */}
         {pts.length > 0 && <circle cx={xs[xs.length-1]} cy={ys[ys.length-1]} r="4"
@@ -482,7 +492,14 @@ function InvRow({ name, count, total, color }) {
         <span className="inv-count">{count} Left</span>
       </div>
       <div className="inv-bar-track">
-        <div className="inv-bar-fill" style={{ width: `${pct}%`, background: color }} />
+        <motion.div
+          className="inv-bar-fill"
+          style={{ background: color }}
+          initial={{ width: 0 }}
+          whileInView={{ width: `${pct}%` }}
+          viewport={{ once: true, amount: 0.45 }}
+          transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+        />
       </div>
     </div>
   );
@@ -491,14 +508,14 @@ function InvRow({ name, count, total, color }) {
 /* ─── Stat Card ──────────────────────────────────────────────────────────── */
 function StatCard({ label, value, sub, icon, valueClass = "" }) {
   return (
-    <div className="stat-card">
+    <CardMotion className="stat-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <span className="stat-label">{label}</span>
         <span className="stat-icon" style={{ color: "var(--text-muted)" }}>{icon}</span>
       </div>
       <div className={`stat-value ${valueClass}`}>{value}</div>
       {sub && <div className={`stat-sub ${sub.startsWith("+") ? "positive" : ""}`}>{sub}</div>}
-    </div>
+    </CardMotion>
   );
 }
 
@@ -632,7 +649,7 @@ export default function Home() {
       color,
       amount: Number(inv.total) || 0,
       profit: Number(inv.profit) || 0,
-      method: inv.paymode || "CASH",
+      method: getInvoicePaymentDisplay(inv),
       date: formattedDate,
       note: "Payment recorded",
       rawDate: invDate,
@@ -808,6 +825,7 @@ export default function Home() {
           </div>
 
           {/* Stat cards row */}
+          <RevealOnScroll>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 14, marginBottom: 20 }}>
             <StatCard
               label="Total Invoices"
@@ -842,8 +860,10 @@ export default function Home() {
               icon={<Icon d={ICONS.bar} size={15} />}
             />
           </div>
+          </RevealOnScroll>
 
           {/* Bottom two-column layout */}
+          <RevealOnScroll>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16 }}>
 
             {/* Chart card */}
@@ -894,8 +914,10 @@ export default function Home() {
             </div>
 
           </div>
+          </RevealOnScroll>
 
           {/* Recent Transactions Table */}
+          <RevealOnScroll>
           <div className="rt-wrap">
             <div className="rt-header">
               <span className="rt-title">Recent Transactions</span>
@@ -999,7 +1021,7 @@ export default function Home() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/invoice/view/${inv._id}`);
+                                navigate(`/invoice/${inv._id}`);
                               }}
                               style={{
                                 width: 30, height: 30, borderRadius: 8,
@@ -1012,22 +1034,6 @@ export default function Home() {
                             >
                               👁
                             </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log("Download invoice:", inv.id);
-                              }}
-                              style={{
-                                width: 30, height: 30, borderRadius: 8,
-                                background: "rgba(16,185,129,.08)",
-                                border: "1px solid rgba(16,185,129,.2)",
-                                color: "#34d399", cursor: "pointer", fontSize: 14,
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                              }}
-                              title="Download Invoice"
-                            >
-                              ⬇
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -1037,6 +1043,7 @@ export default function Home() {
               </table>
             </div>
           </div>
+          </RevealOnScroll>
         </div>
       </main>
     </div>

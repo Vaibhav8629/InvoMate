@@ -11,6 +11,7 @@ import {
   Lock,
   CheckCircle2,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function InvoMateLogin() {
   const navigate = useNavigate();
@@ -56,10 +57,20 @@ export default function InvoMateLogin() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-white overflow-hidden">
+    <motion.div
+      className="min-h-screen w-full flex bg-white overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+    >
 
         {/* ── LEFT PANEL ── */}
-        <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-10 bg-[#f9f9fc] border-r border-gray-100 relative overflow-hidden">
+        <motion.div
+          className="hidden lg:flex lg:w-[45%] flex-col justify-between p-10 bg-[#f9f9fc] border-r border-gray-100 relative overflow-hidden"
+          initial={{ x: -24, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+        >
 
           {/* Decorative blobs */}
           <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-indigo-100 opacity-50 blur-3xl pointer-events-none" />
@@ -102,7 +113,7 @@ export default function InvoMateLogin() {
                   <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center justify-center text-indigo-500 flex-shrink-0">
                     {icon}
                   </div>
-                  <span sName="text-sm text-gray-600">{text}</span>
+                  <span className="text-sm text-gray-600">{text}</span>
                   <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                 </div>
               ))}
@@ -120,11 +131,16 @@ export default function InvoMateLogin() {
               </span>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* ── RIGHT PANEL ── */}
-        <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
-          <div className="w-full max-w-sm">
+        <motion.div
+          className="flex-1 flex items-center justify-center p-8 lg:p-12"
+          initial={{ x: 20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1], delay: 0.06 }}
+        >
+          <motion.div className="w-full max-w-sm" initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.28, delay: 0.12 }}>
 
             {/* Mobile logo */}
             <div className="flex items-center gap-2 mb-8 lg:hidden">
@@ -197,20 +213,30 @@ export default function InvoMateLogin() {
               </div>
 
               {/* Error */}
-              {errorMessage && (
-                <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3.5 py-2.5 rounded-xl">
-                  {errorMessage}
-                </div>
-              )}
+              <AnimatePresence>
+                {errorMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="bg-red-50 border border-red-200 text-red-600 text-sm px-3.5 py-2.5 rounded-xl"
+                  >
+                    {errorMessage}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Submit */}
-              <button
+              <motion.button
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold transition-colors shadow-sm mt-1"
+                whileHover={isSubmitting ? undefined : { scale: 1.015, y: -1 }}
+                whileTap={isSubmitting ? undefined : { scale: 0.985 }}
               >
                 {isSubmitting ? "Signing in…" : "Sign in to Dashboard →"}
-              </button>
+              </motion.button>
 
               {/* Divider */}
               <div className="flex items-center gap-3">
@@ -220,8 +246,8 @@ export default function InvoMateLogin() {
               </div>
             </form>
 
-          </div>
-        </div>
-    </div>
+          </motion.div>
+        </motion.div>
+    </motion.div>
   );
 }

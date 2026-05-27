@@ -1,8 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/auth";
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
 import { useThemeMode } from "../store/theme";
+import { getInvoicePaymentDisplay } from "../utils/invoicePayment";
+import { AnimatePresence, motion } from "framer-motion";
+import { ButtonMotion, CardMotion, RevealOnScroll } from "../components/MotionPrimitives";
+import { transitions } from "../animations/motionSystem";
 
 const fmt = (n) => "₹" + n.toLocaleString("en-IN");
 
@@ -36,7 +40,7 @@ const Avatar = ({ name, color }) => (
 );
 
 const StatCard = ({ label, value, sub, icon, accent }) => (
-  <div
+  <CardMotion
     style={{
       background: "linear-gradient(135deg,var(--surface) 0%, var(--surface-2) 100%)",
       border: "1px solid var(--border-subtle)",
@@ -67,7 +71,7 @@ const StatCard = ({ label, value, sub, icon, accent }) => (
       {value}
     </div>
     <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{sub}</div>
-  </div>
+  </CardMotion>
 );
 
 export default function InvoicesPage() {
@@ -79,6 +83,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState([]);
   const [shopName, setShopName] = useState("Elite Workspace");
   const [loading, setLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState({ key: "rawDate", direction: "desc" });
 
   // Fetch invoices from backend
   useEffect(() => {
@@ -121,7 +126,7 @@ export default function InvoicesPage() {
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
   const thisMonthInvoices = invoices.filter(inv => {
-    const [day, month, year] = inv.date.split('-');
+    const [, month, year] = inv.date.split('-');
     return Number(month) - 1 === currentMonth && Number(year) === currentYear;
   });
   const monthRevenue = thisMonthInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
@@ -153,7 +158,8 @@ export default function InvoicesPage() {
       note: "Payment recorded",
       amount: Number(inv.total) || 0,
       profit: Number(inv.profit) || 0,
-      method: inv.paymode || "CASH",
+      status: inv.paymentStatus === "PENDING" ? "Pending" : "Paid",
+      method: getInvoicePaymentDisplay(inv),
       date: formattedDate,
       rawDate: invDate,
       _id: inv._id,
@@ -177,6 +183,35 @@ export default function InvoicesPage() {
     }
     return matchSearch && matchDate;
   });
+
+  const sortedInvoices = useMemo(() => {
+    const sortable = [...filtered];
+    const { key, direction } = sortConfig;
+    const factor = direction === "asc" ? 1 : -1;
+
+    sortable.sort((a, b) => {
+      if (key === "rawDate") {
+        const av = a.rawDate ? a.rawDate.getTime() : 0;
+        const bv = b.rawDate ? b.rawDate.getTime() : 0;
+        return (av - bv) * factor;
+      }
+
+      if (key === "amount" || key === "profit") {
+        return (Number(a[key]) - Number(b[key])) * factor;
+      }
+
+      return String(a[key] || "").localeCompare(String(b[key] || "")) * factor;
+    });
+
+    return sortable;
+  }, [filtered, sortConfig]);
+
+  const requestSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
 
   const handleLogout = () => {
     logoutUser();
@@ -243,6 +278,30 @@ export default function InvoicesPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDeleteInvoice = async (invoiceId) => {
+    const confirmed = window.confirm("Delete this invoice permanently?");
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/invoice/${invoiceId}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete invoice");
+      }
+
+      setInvoices((prev) => prev.filter((invoice) => invoice._id !== invoiceId));
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      alert("Unable to delete invoice. Please try again.");
+    }
   };
 
   if (loading) {
@@ -348,28 +407,32 @@ export default function InvoicesPage() {
               <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Manage your billing cycles and track revenue performance.</p>
             </div>
             <div style={{ display: "flex", gap: 12 }}>
-              <button
-                onClick={handleExportCSV}
-                style={{
-                  background: "rgba(99,102,241,.08)",
-                  border: "1px solid rgba(99,102,241,.25)",
-                  borderRadius: 10, color: "#818cf8",
-                  padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                }}
-              >
-                ⬇ Export CSV
-              </button>
-              <button
-                onClick={() => navigate("/invoice/create")}
-                style={{
-                  background: "linear-gradient(135deg,#6366f1,#818cf8)",
-                  border: "none", borderRadius: 10,
-                  color: "#fff", padding: "10px 20px",
-                  fontSize: 13, fontWeight: 600, cursor: "pointer",
-                }}
-              >
-                + Create New Invoice
-              </button>
+              <ButtonMotion>
+                <button
+                  onClick={handleExportCSV}
+                  style={{
+                    background: "rgba(99,102,241,.08)",
+                    border: "1px solid rgba(99,102,241,.25)",
+                    borderRadius: 10, color: "#818cf8",
+                    padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  ⬇ Export CSV
+                </button>
+              </ButtonMotion>
+              <ButtonMotion>
+                <button
+                  onClick={() => navigate("/invoice/create")}
+                  style={{
+                    background: "linear-gradient(135deg,#6366f1,#818cf8)",
+                    border: "none", borderRadius: 10,
+                    color: "#fff", padding: "10px 20px",
+                    fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  + Create New Invoice
+                </button>
+              </ButtonMotion>
             </div>
           </div>
 
@@ -446,33 +509,52 @@ export default function InvoicesPage() {
           </div>
 
           {/* Table */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 16, overflow: "hidden" }}>
+          <RevealOnScroll>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: 16, overflow: "hidden" }}>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 980 }}>
                 <thead>
                   <tr style={{ background: "rgba(99,102,241,.06)", borderBottom: "1px solid rgba(99,102,241,.12)" }}>
-                    {["Invoice ID", "Customer", "Phone", "Amount", "Profit", "Payment", "Date", "Actions"].map((h) => (
+                    {[
+                      { label: "Invoice ID", key: "id" },
+                      { label: "Customer", key: "customer" },
+                      { label: "Phone", key: null },
+                      { label: "Amount", key: "amount" },
+                      { label: "Profit", key: "profit" },
+                      { label: "Status", key: null },
+                      { label: "Payment", key: null },
+                      { label: "Date", key: "rawDate" },
+                      { label: "Actions", key: null },
+                    ].map((h) => (
                       <th
-                        key={h}
+                        key={h.label}
+                        onClick={h.key ? () => requestSort(h.key) : undefined}
                         style={{
                           padding: "12px 16px", textAlign: "left",
                           fontSize: 11, fontWeight: 600,
                           color: "var(--text-muted)", letterSpacing: 0.8,
                           textTransform: "uppercase", whiteSpace: "nowrap",
+                          cursor: h.key ? "pointer" : "default",
+                          userSelect: "none",
                         }}
                       >
-                        {h}
+                        {h.label}
+                        {h.key && sortConfig.key === h.key ? (sortConfig.direction === "asc" ? "  ↑" : "  ↓") : ""}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((inv) => (
-                    <tr
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {sortedInvoices.map((inv) => (
+                    <motion.tr
                       key={inv.id}
+                      layout
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={transitions.normal}
                       style={{ borderBottom: "1px solid rgba(99,102,241,.07)", cursor: "pointer" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(99,102,241,.07)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
                       <td style={{ padding: "16px 16px" }}>
                         <span style={{ fontFamily: "monospace", fontSize: 13, color: "#818cf8", fontWeight: 500 }}>
@@ -504,6 +586,27 @@ export default function InvoicesPage() {
                       <td style={{ padding: "16px 16px" }}>
                         <span
                           style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            minWidth: 72,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: 0.3,
+                            textTransform: "uppercase",
+                            color: inv.status === "Paid" ? "#166534" : "#991b1b",
+                            background: inv.status === "Paid" ? "rgba(34, 197, 94, 0.14)" : "rgba(239, 68, 68, 0.14)",
+                            border: `1px solid ${inv.status === "Paid" ? "rgba(34, 197, 94, 0.22)" : "rgba(239, 68, 68, 0.22)"}`,
+                            padding: "4px 10px",
+                            borderRadius: 999,
+                          }}
+                        >
+                          {inv.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: "16px 16px" }}>
+                        <span
+                          style={{
                             fontSize: 11, color: "var(--text-muted)",
                             background: "rgba(99,102,241,.06)",
                             border: "1px solid rgba(99,102,241,.12)",
@@ -524,7 +627,7 @@ export default function InvoicesPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/invoice/view/${inv._id}`);
+                              navigate(`/invoice/${inv._id}`);
                             }}
                             style={{
                               width: 30, height: 30, borderRadius: 8,
@@ -556,24 +659,24 @@ export default function InvoicesPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              // Add download functionality here if needed
-                              console.log("Download invoice:", inv.id);
+                              handleDeleteInvoice(inv._id);
                             }}
                             style={{
                               width: 30, height: 30, borderRadius: 8,
-                              background: "rgba(16,185,129,.08)",
-                              border: "1px solid rgba(16,185,129,.2)",
-                              color: "#34d399", cursor: "pointer", fontSize: 14,
+                              background: "rgba(239,68,68,.08)",
+                              border: "1px solid rgba(239,68,68,.2)",
+                              color: "#f87171", cursor: "pointer", fontSize: 14,
                               display: "flex", alignItems: "center", justifyContent: "center",
                             }}
-                            title="Download Invoice"
+                            title="Delete Invoice"
                           >
-                            ⬇
+                            ❌
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
+                  </AnimatePresence>
                 </tbody>
               </table>
             </div>
@@ -587,7 +690,7 @@ export default function InvoicesPage() {
               }}
             >
               <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                Showing <strong style={{ color: "#818cf8" }}>{filtered.length}</strong> of{" "}
+                Showing <strong style={{ color: "#818cf8" }}>{sortedInvoices.length}</strong> of{" "}
                 <strong style={{ color: "#818cf8" }}>{invoices.length}</strong> invoices
               </span>
               <div style={{ display: "flex", gap: 6 }}>
@@ -607,7 +710,8 @@ export default function InvoicesPage() {
                 ))}
               </div>
             </div>
-          </div>
+            </div>
+          </RevealOnScroll>
         </div>
       </main>
     </div>

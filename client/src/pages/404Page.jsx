@@ -34,7 +34,7 @@ export default function NotFound404() {
         </div>
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           onMouseEnter={(e) => {
             e.target.style.background = "linear-gradient(135deg, #7c5cfc 0%, #4f3bc0 100%)";
             e.target.style.transform = "translateY(-2px)";

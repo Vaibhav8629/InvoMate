@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useThemeMode } from "../store/theme";
+import { motion } from "framer-motion";
+import { ButtonMotion, CardMotion, RevealOnScroll, StaggerItem, StaggerList } from "../components/MotionPrimitives";
 import {
   LayoutDashboard,
   FileText,
@@ -31,6 +33,9 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useThemeMode();
   const [activeTab, setActiveTab] = useState("billing");
+
+  const lightCtaBackground =
+    "linear-gradient(135deg, color-mix(in srgb, var(--accent) 78%, white), color-mix(in srgb, var(--accent) 92%, #c7d2fe))";
 
   // Sync html data-theme attribute
   useEffect(() => {
@@ -107,14 +112,22 @@ export default function LandingPage() {
   ];
 
   return (
-    <div 
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       className="min-h-screen transition-colors duration-200"
       style={{
         background: "var(--bg-base)",
         color: "var(--text-primary)",
-        fontFamily: "'DM Sans', sans-serif"
+        fontFamily: "'DM Sans', sans-serif",
+        position: "relative",
+        overflowX: "clip",
       }}
     >
+      <div className="pointer-events-none absolute -top-20 right-[-80px] w-72 h-72 rounded-full opacity-20 blur-3xl" style={{ background: "var(--accent)" }} />
+      <div className="pointer-events-none absolute top-[45%] -left-20 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{ background: "#06b6d4" }} />
+
       {/* ── HEADER / NAVBAR ── */}
       <header 
         className="sticky top-0 z-50 backdrop-blur-md border-b"
@@ -165,7 +178,13 @@ export default function LandingPage() {
 
       {/* ── HERO SECTION ── */}
       <section className="max-w-7xl mx-auto px-6 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center">
-        <div className="flex flex-col gap-6">
+        <motion.div
+          className="flex flex-col gap-6"
+          initial={{ opacity: 0, y: 96 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.45 }}
+          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div 
             className="inline-flex items-center gap-2 border text-xs font-semibold px-3 py-1.5 rounded-full w-fit tracking-wide uppercase"
             style={{ 
@@ -178,23 +197,44 @@ export default function LandingPage() {
             Premium Financial Suite
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+          <motion.h1
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight"
+            initial={{ opacity: 0, y: 96 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.45 }}
+            transition={{ duration: 1.1, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          >
             Smart GST Billing & <br />
             <span style={{ color: "var(--accent)" }}>Inventory Management</span>
-          </h1>
+          </motion.h1>
 
-          <p className="text-base sm:text-lg max-w-xl leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+          <motion.p
+            className="text-base sm:text-lg max-w-xl leading-relaxed"
+            initial={{ opacity: 0, y: 88 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.45 }}
+            transition={{ duration: 1, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            style={{ color: "var(--text-secondary)" }}
+          >
             InvoMate simplifies business finance. Generate GST compliant invoices, track live inventory levels, perform automatic tax calculations, and export actionable insights. Everything a modern workspace needs to operate with surgical precision.
-          </p>
+          </motion.p>
 
-          <div className="flex flex-wrap gap-4 pt-2">
-            <button 
-              onClick={() => navigate("/login")}
-              className="px-6 py-3 rounded-lg font-semibold text-white flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
-              style={{ background: "var(--accent)" }}
-            >
-              Get Started Free <ArrowRight size={16} />
-            </button>
+          <motion.div
+            className="flex flex-wrap gap-4 pt-2"
+            initial={{ opacity: 0, y: 84 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.45 }}
+            transition={{ duration: 1, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <ButtonMotion>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-6 py-3 rounded-lg font-semibold text-white flex items-center gap-2 hover:opacity-95 transition-opacity cursor-pointer shadow-sm"
+                style={{ background: lightCtaBackground }}
+              >
+                Get Started Free <ArrowRight size={16} />
+              </button>
+            </ButtonMotion>
             <a 
               href="#features"
               className="px-6 py-3 rounded-lg font-semibold border hover:bg-[var(--surface-2)] transition-colors flex items-center gap-2"
@@ -202,33 +242,48 @@ export default function LandingPage() {
             >
               Explore Features
             </a>
-          </div>
+          </motion.div>
 
           {/* Quick Metrics */}
-          <div className="grid grid-cols-3 gap-6 mt-6 pt-8 border-t" style={{ borderColor: "var(--border-subtle)" }}>
-            <div>
+          <motion.div
+            className="grid grid-cols-3 gap-6 mt-6 pt-8 border-t"
+            initial={{ opacity: 0, y: 88 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.45 }}
+            transition={{ duration: 1.05, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            style={{ borderColor: "var(--border-subtle)" }}
+          >
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.45 }} transition={{ delay: 0.34, duration: 0.52 }}>
               <p className="text-2xl font-bold">100%</p>
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>GST Compliant</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">Real-time</p>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.45 }} transition={{ delay: 0.44, duration: 0.52 }}>
+              <p className="text-2xl font-bold">Real-Time</p>
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Inventory Sync</p>
-            </div>
-            <div>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.45 }} transition={{ delay: 0.54, duration: 0.52 }}>
               <p className="text-2xl font-bold">Instant</p>
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>PDF & CSV Exports</p>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
         {/* Hero Interactive UI Preview */}
-        <div className="relative lg:ml-6">
+        <motion.div
+          className="relative lg:ml-6"
+          initial={{ opacity: 0, y: 96, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 1.2, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ rotateX: 2, rotateY: -2, y: -2 }}
+          style={{ perspective: 1400 }}
+        >
           <div 
             className="absolute inset-0 bg-gradient-to-tr opacity-20 blur-3xl pointer-events-none rounded-full"
             style={{ background: "var(--accent)" }}
           />
 
-          <div 
+          <CardMotion
             className="relative border rounded-2xl p-6 shadow-2xl flex flex-col gap-5"
             style={{
               background: "var(--surface)",
@@ -249,20 +304,20 @@ export default function LandingPage() {
 
             {/* Quick Metrics Cards Mock */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl border flex flex-col gap-1" style={{ background: "var(--surface-2)", borderColor: "var(--border-subtle)" }}>
+              <CardMotion className="p-4 rounded-xl border flex flex-col gap-1" style={{ background: "var(--surface-2)", borderColor: "var(--border-subtle)" }}>
                 <span className="text-[10px] uppercase font-mono tracking-widest text-[var(--text-muted)]">Today's Sales</span>
                 <span className="text-xl font-bold font-mono text-[var(--accent)]">₹42,500</span>
                 <span className="text-[10px] text-green-400 font-medium">↗ +18.4% vs yesterday</span>
-              </div>
-              <div className="p-4 rounded-xl border flex flex-col gap-1" style={{ background: "var(--surface-2)", borderColor: "var(--border-subtle)" }}>
+              </CardMotion>
+              <CardMotion className="p-4 rounded-xl border flex flex-col gap-1" style={{ background: "var(--surface-2)", borderColor: "var(--border-subtle)" }}>
                 <span className="text-[10px] uppercase font-mono tracking-widest text-[var(--text-muted)]">Low Stock Items</span>
                 <span className="text-xl font-bold font-mono text-amber-500">3 SKUs</span>
                 <span className="text-[10px] text-[var(--text-muted)]">Action required</span>
-              </div>
+              </CardMotion>
             </div>
 
             {/* Mini billing table preview */}
-            <div className="border rounded-xl overflow-hidden" style={{ borderColor: "var(--border-subtle)" }}>
+            <CardMotion className="border rounded-xl overflow-hidden" style={{ borderColor: "var(--border-subtle)" }}>
               <div className="grid grid-cols-4 bg-[var(--surface-2)] p-2 text-[10px] uppercase font-mono font-bold text-[var(--text-muted)] border-b" style={{ borderColor: "var(--border-subtle)" }}>
                 <span>Item</span>
                 <span className="text-right">Qty</span>
@@ -283,18 +338,19 @@ export default function LandingPage() {
                   <span className="text-right font-mono">₹1,120</span>
                 </div>
               </div>
-            </div>
+            </CardMotion>
 
             {/* Total footer */}
-            <div className="flex justify-between items-center bg-[var(--surface-2)] p-3 rounded-lg border" style={{ borderColor: "var(--border-subtle)" }}>
+            <CardMotion className="flex justify-between items-center bg-[var(--surface-2)] p-3 rounded-lg border" style={{ borderColor: "var(--border-subtle)" }}>
               <span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Grand Total</span>
               <span className="text-base font-bold font-mono text-[var(--accent)]">₹4,118</span>
-            </div>
-          </div>
-        </div>
+            </CardMotion>
+          </CardMotion>
+        </motion.div>
       </section>
 
       {/* ── FEATURES SECTION ── */}
+      <RevealOnScroll>
       <section id="features" className="border-t py-20 bg-[var(--surface)]" style={{ borderColor: "var(--border-subtle)" }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16 flex flex-col gap-3">
@@ -306,44 +362,39 @@ export default function LandingPage() {
           </div>
 
           {/* Features Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerList className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feat, i) => (
-              <div 
-                key={i}
-                className="group border p-6 rounded-2xl transition-all duration-300 hover:shadow-xl flex flex-col gap-4"
-                style={{
-                  background: "var(--bg-base)",
-                  borderColor: "var(--border-subtle)"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--accent)";
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-subtle)";
-                  e.currentTarget.style.transform = "none";
-                }}
-              >
-                <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-[var(--accent)] group-hover:text-white"
+              <StaggerItem key={i}>
+                <CardMotion
+                  className="group border p-6 rounded-2xl transition-all duration-300 hover:shadow-xl flex flex-col gap-4"
                   style={{
-                    background: "var(--surface-2)",
-                    color: "var(--accent)"
+                    background: "var(--bg-base)",
+                    borderColor: "var(--border-subtle)"
                   }}
                 >
-                  {feat.icon}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <h3 className="font-bold text-sm tracking-tight">{feat.title}</h3>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>{feat.desc}</p>
-                </div>
-              </div>
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-[var(--accent)] group-hover:text-white"
+                    style={{
+                      background: "var(--surface-2)",
+                      color: "var(--accent)"
+                    }}
+                  >
+                    {feat.icon}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <h3 className="font-bold text-sm tracking-tight">{feat.title}</h3>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>{feat.desc}</p>
+                  </div>
+                </CardMotion>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerList>
         </div>
       </section>
+      </RevealOnScroll>
 
       {/* ── ANALYTICS & INSIGHTS SECTION ── */}
+      <RevealOnScroll>
       <section id="analytics" className="border-t py-20" style={{ borderColor: "var(--border-subtle)" }}>
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[0.8fr_1.2fr] gap-12 items-center">
           <div className="flex flex-col gap-6">
@@ -371,7 +422,7 @@ export default function LandingPage() {
           </div>
 
           {/* Interactive Chart Illustration Mock */}
-          <div 
+          <CardMotion
             className="border p-6 rounded-2xl shadow-xl flex flex-col gap-6 relative"
             style={{
               background: "var(--surface)",
@@ -423,11 +474,13 @@ export default function LandingPage() {
               <span>Jun</span>
               <span>Jul</span>
             </div>
-          </div>
+          </CardMotion>
         </div>
       </section>
+      </RevealOnScroll>
 
       {/* ── SMART BILLING / POS INTERACTION SECTION ── */}
+      <RevealOnScroll>
       <section id="billing" className="border-t py-20 bg-[var(--surface)]" style={{ borderColor: "var(--border-subtle)" }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16 flex flex-col gap-3">
@@ -438,59 +491,67 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div 
-              className="border p-8 rounded-2xl flex flex-col gap-4"
-              style={{
-                background: "var(--bg-base)",
-                borderColor: "var(--border-subtle)"
-              }}
-            >
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-500 flex items-center justify-center">
-                <QrCode className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-lg">Barcode Scan Ready</h3>
-              <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                Hook up any standard barcode scanner or scanner camera. Scan any product SKU to instantly append the item directly into your current billing items table without manual search.
-              </p>
-            </div>
+          <StaggerList className="grid lg:grid-cols-3 gap-8">
+            <StaggerItem>
+              <CardMotion
+                className="border p-8 rounded-2xl flex flex-col gap-4"
+                style={{
+                  background: "var(--bg-base)",
+                  borderColor: "var(--border-subtle)"
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-500 flex items-center justify-center">
+                  <QrCode className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-lg">Barcode Scan Ready</h3>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  Hook up any standard barcode scanner or scanner camera. Scan any product SKU to instantly append the item directly into your current billing items table without manual search.
+                </p>
+              </CardMotion>
+            </StaggerItem>
 
-            <div 
-              className="border p-8 rounded-2xl flex flex-col gap-4"
-              style={{
-                background: "var(--bg-base)",
-                borderColor: "var(--border-subtle)"
-              }}
-            >
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 flex items-center justify-center">
-                <FileText className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-lg">Auto-calculated GST</h3>
-              <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                Tax slabs (0%, 5%, 12%, 18%, 28%) are automatically resolved and computed live against active billing items. Handles CGST, SGST, and IGST computations behind the scenes automatically.
-              </p>
-            </div>
+            <StaggerItem>
+              <CardMotion
+                className="border p-8 rounded-2xl flex flex-col gap-4"
+                style={{
+                  background: "var(--bg-base)",
+                  borderColor: "var(--border-subtle)"
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-lg">Auto-calculated GST</h3>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  Tax slabs (0%, 5%, 12%, 18%, 28%) are automatically resolved and computed live against active billing items. Handles CGST, SGST, and IGST computations behind the scenes automatically.
+                </p>
+              </CardMotion>
+            </StaggerItem>
 
-            <div 
-              className="border p-8 rounded-2xl flex flex-col gap-4"
-              style={{
-                background: "var(--bg-base)",
-                borderColor: "var(--border-subtle)"
-              }}
-            >
-              <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 flex items-center justify-center">
-                <Smartphone className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-lg">Digital Quick Share</h3>
-              <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                Don't waste ink. Share professional digital copies of invoices instantly to your customer's email or WhatsApp directly from the dashboard view upon successful checkout.
-              </p>
-            </div>
-          </div>
+            <StaggerItem>
+              <CardMotion
+                className="border p-8 rounded-2xl flex flex-col gap-4"
+                style={{
+                  background: "var(--bg-base)",
+                  borderColor: "var(--border-subtle)"
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 flex items-center justify-center">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-lg">Digital Quick Share</h3>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  Don't waste ink. Share professional digital copies of invoices instantly to your customer's email or WhatsApp directly from the dashboard view upon successful checkout.
+                </p>
+              </CardMotion>
+            </StaggerItem>
+          </StaggerList>
         </div>
       </section>
+      </RevealOnScroll>
 
       {/* ── SECURITY SECTION ── */}
+      <RevealOnScroll>
       <section id="security" className="border-t py-20" style={{ borderColor: "var(--border-subtle)" }}>
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
           {/* Left panel - mock locker UI */}
@@ -499,7 +560,7 @@ export default function LandingPage() {
               className="absolute inset-0 bg-gradient-to-tr opacity-25 blur-3xl pointer-events-none rounded-full"
               style={{ background: "var(--accent)" }}
             />
-            <div 
+            <CardMotion
               className="relative border rounded-2xl p-8 max-w-sm w-full shadow-2xl flex flex-col gap-6"
               style={{
                 background: "var(--surface)",
@@ -525,10 +586,10 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-[var(--surface-2)]" style={{ borderColor: "var(--border-subtle)" }}>
                   <ShieldCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <span className="text-xs font-mono font-medium">SOC 2 Compliant Database</span>
+                  <span className="text-xs font-mono font-medium">JWT auth with HTTP-only cookies</span>
                 </div>
               </div>
-            </div>
+            </CardMotion>
           </div>
 
           <div className="flex flex-col gap-6">
@@ -538,27 +599,33 @@ export default function LandingPage() {
               We implement enterprise security patterns across our backend services. From secure cookie-based session tokens to native Bcrypt password salts, rest assured that your sales data and customer contacts are visible only to you.
             </p>
 
-            <div className="grid sm:grid-cols-2 gap-6 pt-2">
-              <div className="flex flex-col gap-2">
+            <StaggerList className="grid sm:grid-cols-2 gap-6 pt-2">
+              <StaggerItem>
+              <CardMotion className="flex flex-col gap-2 p-3 rounded-xl border" style={{ borderColor: "var(--border-subtle)", background: "var(--surface)" }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-500/10 text-violet-500">
                   <PenTool size={16} />
                 </div>
                 <h4 className="font-bold text-sm">Authorized Signature</h4>
                 <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Upload authorized digital signatures to verify the authenticity of all rendered invoice PDFs.</p>
-              </div>
-              <div className="flex flex-col gap-2">
+              </CardMotion>
+              </StaggerItem>
+              <StaggerItem>
+              <CardMotion className="flex flex-col gap-2 p-3 rounded-xl border" style={{ borderColor: "var(--border-subtle)", background: "var(--surface)" }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-500/10 text-violet-500">
                   <Cloud size={16} />
                 </div>
                 <h4 className="font-bold text-sm">Cloud Protection</h4>
                 <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Secure MongoDB clusters isolate and protect workspace items and sales histories reliably.</p>
-              </div>
-            </div>
+              </CardMotion>
+              </StaggerItem>
+            </StaggerList>
           </div>
         </div>
       </section>
+      </RevealOnScroll>
 
       {/* ── CTA SECTION ── */}
+      <RevealOnScroll>
       <section className="border-t py-20 bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)]" style={{ borderColor: "var(--border-subtle)" }}>
         <div className="max-w-4xl mx-auto px-6 text-center flex flex-col gap-8 items-center">
           <h2 className="text-3xl sm:text-5xl font-bold tracking-tight">Start managing your business <br /><span style={{ color: "var(--accent)", fontSize: "1.08em", letterSpacing: "-0.04em", textShadow: "0 10px 24px rgba(0,0,0,.08)" }}>smarter with InvoMate</span></h2>
@@ -566,16 +633,19 @@ export default function LandingPage() {
             Join thousands of smart businesses automating their financial ledger and invoice flows. Try InvoMate for free today.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <button 
-              onClick={() => navigate("/login")}
-              className="px-6 py-3 rounded-lg font-semibold text-white flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
-              style={{ background: "var(--accent)" }}
-            >
-              Start Billing Now <ArrowRight size={16} />
-            </button>
+            <ButtonMotion>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-6 py-3 rounded-lg font-semibold text-white flex items-center gap-2 hover:opacity-95 transition-opacity cursor-pointer shadow-sm"
+                style={{ background: lightCtaBackground }}
+              >
+                Start Billing Now <ArrowRight size={16} />
+              </button>
+            </ButtonMotion>
           </div>
         </div>
       </section>
+      </RevealOnScroll>
 
       {/* ── FOOTER ── */}
       <footer className="border-t py-12" style={{ borderColor: "var(--border-subtle)", background: "var(--surface)" }}>
@@ -618,6 +688,6 @@ export default function LandingPage() {
           <p>&copy; {new Date().getFullYear()} InvoMate Technologies Inc. All rights reserved.</p>
         </div>
       </footer>
-    </div>
+    </motion.div>
   );
 }

@@ -48,6 +48,17 @@ body {
 	color: var(--text-primary);
 }
 
+html {
+	scroll-behavior: smooth;
+}
+
+:root {
+	--motion-fast: 160ms;
+	--motion-normal: 260ms;
+	--motion-slow: 380ms;
+	--motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 button,
 input,
 textarea,
@@ -60,6 +71,144 @@ input::placeholder,
 textarea::placeholder {
 	color: var(--text-muted);
 	opacity: 1;
+}
+
+button,
+[role="button"],
+.btn,
+.MuiButton-root {
+	transition:
+		transform var(--motion-fast) var(--motion-ease),
+		box-shadow var(--motion-normal) var(--motion-ease),
+		background-color var(--motion-normal) var(--motion-ease),
+		border-color var(--motion-normal) var(--motion-ease),
+		color var(--motion-normal) var(--motion-ease),
+		opacity var(--motion-fast) var(--motion-ease);
+	will-change: transform;
+}
+
+button:hover:not(:disabled),
+[role="button"]:hover:not([aria-disabled="true"]),
+.btn:hover,
+.MuiButton-root:hover:not(.Mui-disabled) {
+	transform: translateY(-1px) scale(1.015);
+	box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+}
+
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]),
+.btn:active,
+.MuiButton-root:active:not(.Mui-disabled) {
+	transform: translateY(0) scale(0.985);
+}
+
+button:disabled,
+.MuiButton-root.Mui-disabled,
+[aria-disabled="true"] {
+	opacity: 0.56;
+	filter: saturate(0.7);
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
+input,
+textarea,
+select,
+.MuiOutlinedInput-root,
+.MuiInputBase-root {
+	transition:
+		border-color var(--motion-normal) var(--motion-ease),
+		box-shadow var(--motion-normal) var(--motion-ease),
+		background-color var(--motion-normal) var(--motion-ease);
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.MuiOutlinedInput-root.Mui-focused {
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+table tbody tr,
+.table-row,
+.MuiTableBody-root .MuiTableRow-root {
+	transition:
+		background-color var(--motion-fast) var(--motion-ease),
+		transform var(--motion-fast) var(--motion-ease),
+		opacity var(--motion-normal) var(--motion-ease);
+}
+
+table tbody tr:hover,
+.table-row:hover,
+.MuiTableBody-root .MuiTableRow-root:hover {
+	background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.fade-in-list > * {
+	animation: fadeInUp var(--motion-slow) var(--motion-ease) both;
+}
+
+.fade-in-list > *:nth-child(2) { animation-delay: 40ms; }
+.fade-in-list > *:nth-child(3) { animation-delay: 80ms; }
+.fade-in-list > *:nth-child(4) { animation-delay: 120ms; }
+.fade-in-list > *:nth-child(5) { animation-delay: 160ms; }
+
+.skeleton {
+	position: relative;
+	overflow: hidden;
+	background: linear-gradient(
+		100deg,
+		color-mix(in srgb, var(--text-muted) 10%, transparent) 20%,
+		color-mix(in srgb, var(--text-primary) 18%, transparent) 40%,
+		color-mix(in srgb, var(--text-muted) 10%, transparent) 60%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.45s linear infinite;
+	border-radius: 10px;
+}
+
+.reveal-on-scroll {
+	opacity: 0;
+	transform: translate3d(0, 14px, 0);
+	transition:
+		opacity var(--motion-slow) var(--motion-ease),
+		transform var(--motion-slow) var(--motion-ease);
+}
+
+.reveal-on-scroll.is-visible {
+	opacity: 1;
+	transform: translate3d(0, 0, 0);
+}
+
+@keyframes shimmer {
+	0% { background-position: 200% 0; }
+	100% { background-position: -200% 0; }
+}
+
+@keyframes fadeInUp {
+	0% {
+		opacity: 0;
+		transform: translate3d(0, 8px, 0);
+	}
+	100% {
+		opacity: 1;
+		transform: translate3d(0, 0, 0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 1ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 1ms !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 .text-gray-100,

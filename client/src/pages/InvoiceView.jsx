@@ -19,6 +19,7 @@ import TagOutlinedIcon from "@mui/icons-material/TagOutlined";
 
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { getInvoicePaymentDisplay, getInvoicePaymentStatus } from "../utils/invoicePayment";
 
 export default function InvoiceView() {
   const { id } = useParams();
@@ -197,9 +198,12 @@ export default function InvoiceView() {
   const payChip = {
     Cash:   { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0" },
     Online: { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE" },
+    PENDING: { bg: "#FFF7ED", color: "#D97706", border: "#FCD34D" },
     default:{ bg: "#F8FAFC", color: "#64748B", border: "#E2E8F0" },
   };
-  const pm = payChip[invoice.paymode] || payChip.default;
+  const paymentStatus = getInvoicePaymentStatus(invoice);
+  const paymentDisplay = getInvoicePaymentDisplay(invoice);
+  const pm = paymentStatus === "PENDING" ? payChip.PENDING : payChip[invoice.paymode] || payChip.default;
 
   return (
     <Box sx={{ minHeight: "100vh", background: "#F6F8FB", fontFamily: "'DM Sans', sans-serif", display: "flex" }}>
@@ -347,7 +351,7 @@ export default function InvoiceView() {
               {
                 icon: <PaymentOutlinedIcon sx={{ fontSize: 14 }} />,
                 label: "Payment",
-                value: invoice.paymode || "—",
+                value: paymentDisplay,
                 isChip: true,
                 accent: "#10B981",
               },
@@ -644,7 +648,7 @@ export default function InvoiceView() {
                 </Typography>
               </Box>
             </Box>
-            {invoice.paymode && (
+            {paymentDisplay && (
               <Box sx={{
                 display: "inline-flex", alignItems: "center",
                 px: "10px", py: "4px", borderRadius: "7px",
@@ -653,7 +657,7 @@ export default function InvoiceView() {
               }}>
                 <PaymentOutlinedIcon sx={{ fontSize: 11, color: pm.color, mr: "4px" }} />
                 <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: pm.color }}>
-                  {invoice.paymode}
+                  {paymentDisplay}
                 </Typography>
               </Box>
             )}

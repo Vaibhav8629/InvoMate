@@ -27,6 +27,7 @@ router.route("/updateproduct").put(authMiddleware, checkSubscription, productCon
 router.route("/deleteproduct/:id").delete(authMiddleware, checkSubscription, productController.deleteProduct);
 router.post("/saveinvoice", authMiddleware, checkSubscription, invoiceController.saveInvoice);
 router.put("/invoice/:id", authMiddleware, checkSubscription, invoiceController.updateInvoice);
+router.delete("/invoice/:id", authMiddleware, checkSubscription, invoiceController.deleteInvoice);
 router.route("/getinvoices").get(authMiddleware, checkSubscription, invoiceController.getInvoices);
 router.get("/product/barcode/:code", authMiddleware, checkSubscription, barcodeController.getProductByBarcode);
 router.get("/invoice/:id", authMiddleware, checkSubscription, invoiceController.getInvoiceById);

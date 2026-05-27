@@ -1,5 +1,6 @@
 const PDFDocument = require("pdfkit");
 const Invoice = require("../models/Invoice");
+const Profile = require("../models/Profile");
 const { aggregateGSTReports, formatCurrency, formatDate } = require("../services/gstService");
 
 const escapeCsv = (value) => {
@@ -269,6 +270,10 @@ const exportGstCsv = async (req, res) => {
 const exportGstPdf = async (req, res) => {
   try {
     const payload = await fetchGstPayload(req);
+    const profile = await Profile.findOne({ user: req.user._id }).lean();
+    const shopName = profile?.ShopName || payload.invoices?.[0]?.shopName || "Business";
+    const shopAddress = profile?.Address || payload.invoices?.[0]?.shopAddress || "N/A";
+    const gstNumber = profile?.GSTNumber || payload.invoices?.[0]?.shopGST || "N/A";
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "attachment; filename=\"gst-report.pdf\"");
@@ -301,11 +306,17 @@ const exportGstPdf = async (req, res) => {
       return 42;
     };
 
-    doc.fontSize(18).font("Helvetica-Bold").fillColor("#0f172a").text("GST Report", 36, 40, { align: "left" });
-    doc.fontSize(10).font("Helvetica").fillColor("#475569").text(`Date Range: ${payload.filters.label}`, 36, 64, { align: "left" });
-    doc.text(`Generated: ${formatDate(new Date())} ${new Date().toLocaleTimeString("en-IN")}`, 36, 78, { align: "left" });
+    doc.rect(36, 36, 523, 54).fill("#0f172a");
+    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(18).text(shopName, 46, 46, { width: 503, align: "center" });
+    doc.font("Helvetica").fontSize(9).fillColor("#cbd5e1").text(shopAddress, 46, 66, { width: 503, align: "center" });
+    doc.font("Helvetica-Bold").fontSize(9).fillColor("#f8fafc").text(`GSTIN: ${gstNumber}`, 46, 79, { width: 503, align: "center" });
 
-    let y = 106;
+    doc.rect(36, 96, 523, 22).fill("#185fa5");
+    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(10).text("GST Report", 46, 102, { width: 503, align: "left" });
+    doc.font("Helvetica").fontSize(9).fillColor("#e2e8f0").text(`Date Range: ${payload.filters.label}`, 250, 102, { width: 160, align: "center" });
+    doc.text(`Generated: ${formatDate(new Date())} ${new Date().toLocaleTimeString("en-IN")}`, 410, 102, { width: 139, align: "right" });
+
+    let y = 132;
 
     doc.font("Helvetica-Bold").fontSize(12).fillColor("#0f172a").text("GST Summary", 36, y);
     y += 18;

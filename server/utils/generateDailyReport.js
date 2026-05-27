@@ -3,6 +3,7 @@ const PDFDocument = require('pdfkit');
 const moment      = require('moment');
 const https       = require('https');
 const http        = require('http');
+const { getInvoicePaymentLabel } = require('./invoicePayment');
 
 module.exports = async function generateDailyReport(res, {
   businessName,
@@ -256,7 +257,7 @@ module.exports = async function generateDailyReport(res, {
       );
       doc.text(itemLines.join('\n') || '-', C.items, y + 4, { width: 163 });
       doc.fillColor('#185FA5').font('Helvetica-Bold').fontSize(7)
-         .text((inv.paymode || 'N/A').toUpperCase(), C.mode,  y + 4, { width: 38 });
+         .text(String(getInvoicePaymentLabel(inv) || 'N/A').toUpperCase(), C.mode,  y + 4, { width: 38 });
       doc.fillColor('#333333').font('Helvetica').fontSize(7)
          .text(inr(inv.subtotal || 0), C.sub,   y + 4, { width: 44 });
       doc.fillColor('#BA7517').font('Helvetica').fontSize(7)
