@@ -13,6 +13,8 @@ const checkSubscription = require("../middleware/subscription-middleware");
 router.route("/login").post(authController.login);
 router.route("/logout").post(authController.logout);
 router.route("/test-cookie").get(authController.testCookie); // Test endpoint
+router.route("/forgot-password").post(authController.forgotPassword);
+router.route("/reset-password/:token").post(authController.resetPassword);
 
 
 //Protected route

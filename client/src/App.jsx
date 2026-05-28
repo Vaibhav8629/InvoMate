@@ -9,6 +9,8 @@ import { PageMotion } from './components/MotionPrimitives';
 import baseMuiTheme from './theme/theme';
 import SignUp from './pages/Register';
 import SignIn from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import BasicTextFields from "./pages/ItemsCrud";
 import Profile from './pages/Profile';
 import Dashboard from './pages/Home';
@@ -31,6 +33,8 @@ const TransitionRoutes = () => {
         <Route path='/' element={withPageTransition(<LandingPage />)} />
         <Route path='/register' element={withPageTransition(<SignUp />)} />
         <Route path='/login' element={withPageTransition(<SignIn />)} />
+        <Route path='/auth/forgot-password' element={withPageTransition(<ForgotPassword />)} />
+        <Route path='/auth/reset-password/:token' element={withPageTransition(<ResetPassword />)} />
         <Route path='/products' element={withPageTransition(<ProtectedRoute><BasicTextFields /></ProtectedRoute>)} />
         <Route path='/profile' element={withPageTransition(<ProtectedRoute><Profile /></ProtectedRoute>)} />
         <Route path='/home' element={withPageTransition(<ProtectedRoute><Dashboard /></ProtectedRoute>)} />

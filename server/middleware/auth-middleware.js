@@ -17,12 +17,20 @@ const authMiddleware = async (req, res, next) => {
 	
 	try{
 		// JWT verification logic remains unchanged
-		const isVerified = jwt.verify(token, process.env.JWT_SIGN); 
+		const secret = process.env.JWT_SECRET || process.env.JWT_SIGN;
+		const isVerified = jwt.verify(token, secret); 
 		const userData = await User.findOne({email : isVerified.email}).select({password:0});
 		
 		if (!userData) {
 			console.log("❌ User not found for token");
 			return res.status(401).json({ msg: "User not found" });
+		}
+
+		if (userData.passwordChangedAt) {
+			const passwordChangedAt = Math.floor(new Date(userData.passwordChangedAt).getTime() / 1000);
+			if (isVerified.iat && isVerified.iat < passwordChangedAt) {
+				return res.status(401).json({ msg: "Session expired. Please log in again." });
+			}
 		}
 		
 		console.log("✅ Token verified for user:", userData.email);

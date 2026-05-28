@@ -10,6 +10,21 @@ const UserSchema = new mongoose.Schema({
   email:     { type: String, required: true },
   password:  { type: String, required: true },
 
+  passwordChangedAt: {
+    type: Date,
+    default: null,
+  },
+
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+
+  resetPasswordExpire: {
+    type: Date,
+    default: null,
+  },
+
   role: {
     type: String,
     enum: ["admin", "user"],
@@ -33,6 +48,7 @@ UserSchema.pre('save', async function () {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(user.password, salt);
   user.password = hashedPassword;
+  user.passwordChangedAt = new Date(Date.now() - 1000);
 });
 
 UserSchema.methods.generateToken = async function () {
@@ -42,7 +58,8 @@ UserSchema.methods.generateToken = async function () {
     role: this.role, 
   }
   try {
-    return jwt.sign(payload, process.env.JWT_SIGN, { expiresIn: "30d" });
+    const secret = process.env.JWT_SECRET || process.env.JWT_SIGN;
+    return jwt.sign(payload, secret, { expiresIn: "30d" });
   } catch (error) {
     console.log(error);
   }
